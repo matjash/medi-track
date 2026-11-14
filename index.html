@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Symptom Log</title>
+<meta name="theme-color" content="#1f3a5f">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Symptoms">
+<style>
+:root{
+  --bg:#f4f5f7;--card:#fff;--text:#1d2228;--muted:#6b7480;--line:#e2e5ea;--accent:#1f3a5f;--accent-bg:#e6edf6;
+  --danger:#b00020;--danger-bg:#fdecea;--ok:#2e7d32;
+  --c-nausea:#d85a30;--c-nausea-bg:#faece7;
+  --c-stool:#ba7517;--c-stool-bg:#faeeda;
+  --c-dizzy:#534ab7;--c-dizzy-bg:#eeedfe;
+  --c-stomach:#993556;--c-stomach-bg:#fbeaf0;
+  --c-food:#0f6e56;--c-food-bg:#e1f5ee;
+  --c-sleep:#185fa5;--c-sleep-bg:#e6f1fb;
+  --c-gray:#5f5e5a;--c-gray-bg:#f1efe8;
+  --period:rgba(212,83,126,.14);
+}
+
+html[data-theme=dark]{--bg:#121417;--card:#1c1f24;--text:#e8eaed;--muted:#9aa3ad;--line:#2c3138;--accent:#8fb4e6;--accent-bg:#1f2c3d;
+  --danger:#ff8a8a;--danger-bg:#3a1c1c;
+  --c-nausea:#f0997b;--c-nausea-bg:#3a2219;--c-stool:#efb35a;--c-stool-bg:#382a14;--c-dizzy:#afa9ec;--c-dizzy-bg:#26233f;
+  --c-stomach:#ed93b1;--c-stomach-bg:#3a1f2a;--c-food:#5dcaa5;--c-food-bg:#14302a;--c-sleep:#85b7eb;--c-sleep-bg:#182a3d;
+  --c-gray:#c9c7bf;--c-gray-bg:#2a2a28;--period:rgba(237,147,177,.16)}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--bg);padding:calc(10px + env(safe-area-inset-top)) 16px 6px}
+header h1{font-size:19px;margin:0;font-weight:600}
+header .sub{font-size:13px;color:var(--muted)}
+main{padding:6px 14px calc(90px + env(safe-area-inset-bottom));max-width:640px;margin:0 auto}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:6}
+nav button{flex:1;border:0;background:none;color:var(--muted);padding:9px 0 8px;font-size:12px}
+nav button svg{display:block;margin:0 auto 2px;width:22px;height:22px}
+nav button.on{color:var(--accent);font-weight:600}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.big{border:0;border-radius:16px;padding:16px 8px;font-size:15px;font-weight:600;min-height:86px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.big .ico{font-size:26px;line-height:1}
+.big:active{transform:scale(.97)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:10px 0}
+.today{font-size:13px;color:var(--muted);margin:2px 0 10px}
+.row2{display:flex;gap:10px}
+.row2>*{flex:1}
+.ghost{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:12px;padding:12px;font-size:14px;font-weight:600}
+.primary{border:0;background:var(--accent);color:#fff;border-radius:12px;padding:13px;font-size:16px;font-weight:600;width:100%}
+html[data-theme=dark] .primary{color:#0f1720}
+.danger{border:1px solid var(--danger);background:none;color:var(--danger);border-radius:12px;padding:12px;font-size:14px;font-weight:600}
+.alarm{background:var(--danger-bg);color:var(--danger);border-radius:12px;padding:10px 12px;font-size:14px;margin:10px 0}
+/* sheet */
+#sheetWrap{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;z-index:20;align-items:flex-end;justify-content:center}
+#sheetWrap.open{display:flex}
+#sheet{background:var(--card);width:100%;max-width:640px;border-radius:20px 20px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto}
+#sheet h2{margin:0 0 4px;font-size:20px}
+.lbl{font-size:13px;color:var(--muted);margin:14px 0 6px}
+.time{display:flex;gap:8px;align-items:center}
+.time input{min-width:0;font-size:16px;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);flex:1}
+.time button{flex:none;white-space:nowrap;border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:10px;padding:9px 10px;font-size:13px}
+input[type=range]{width:100%;height:36px;accent-color:var(--accent)}
+.slv{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.slv b{font-size:22px;color:var(--text)}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:20px;padding:8px 13px;font-size:14px}
+.chip.on{background:var(--accent-bg);border-color:var(--accent);color:var(--accent);font-weight:600}
+.seg{display:flex;gap:6px}
+.seg .chip{flex:1;text-align:center;border-radius:10px}
+textarea,.num,select{width:100%;font:inherit;font-size:16px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text)}
+.stepper{display:flex;align-items:center;gap:12px}
+.stepper button{width:46px;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:22px}
+.stepper b{font-size:22px;min-width:30px;text-align:center}
+.actions{display:flex;gap:10px;margin-top:18px}
+.actions .primary{flex:2}.actions .ghost,.actions .danger{flex:1}
+/* day list */
+.dayhead{display:flex;align-items:center;justify-content:space-between;margin:6px 0}
+.dayhead button{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:10px;width:42px;height:38px;font-size:18px}
+.dayhead .d{font-weight:600}
+.ev{display:flex;gap:10px;align-items:flex-start;padding:10px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+.ev:last-child{border-bottom:0}
+.ev .t{font-variant-numeric:tabular-nums;color:var(--muted);font-size:14px;min-width:44px}
+.ev .dot{width:10px;height:10px;border-radius:50%;margin-top:5px;flex:none}
+.ev .x{font-size:14px}
+.ev .x small{color:var(--muted)}
+.empty{color:var(--muted);text-align:center;padding:24px 8px;font-size:14px}
+/* overview */
+.chartT{font-size:13px;font-weight:600;margin:4px 0 2px;display:flex;justify-content:space-between}
+.chartT span{font-weight:400;color:var(--muted)}
+svg.ch{width:100%;height:auto;display:block}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--bg);border-radius:10px;padding:8px;text-align:center}
+.stat b{display:block;font-size:20px}
+.stat span{font-size:11px;color:var(--muted)}
+.medrow{display:flex;gap:8px;margin:6px 0}
+.medrow input{flex:1}
+.medrow button{border:1px solid var(--line);background:var(--bg);color:var(--danger);border-radius:10px;width:44px}
+#toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#22272e;color:#fff;border-radius:12px;padding:10px 14px;font-size:14px;display:none;z-index:30;gap:12px;align-items:center;white-space:nowrap}
+#toast button{background:none;border:0;color:#8fb4e6;font-weight:700;font-size:14px}
+.hint{font-size:12px;color:var(--muted)}
+details.card>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600}
+details.card>summary::-webkit-details-marker{display:none}
+details.card>summary::after{content:"›";transform:rotate(90deg);color:var(--muted);font-size:18px;margin-left:8px}
+details.card:not([open])>summary::after{transform:none}
+details.card>summary span{font-weight:400;color:var(--muted);font-size:12px;margin-left:auto}
+details.card[open]>summary{margin-bottom:8px}
+/* report */
+#report{display:none}
+@media print{
+  header,nav,main,#toast,#sheetWrap{display:none!important}
+  #report{-webkit-print-color-adjust:exact;print-color-adjust:exact;display:block!important;color:#000;background:#fff;padding:0;font-size:11px}
+  body{background:#fff}
+  #report table{page-break-inside:auto}#report tr{page-break-inside:avoid}
+}
+#report h1{font-size:18px;margin:0}
+#report h2{font-size:13px;margin:12px 0 4px;color:#1f3a5f}
+#report table{border-collapse:collapse;width:100%;font-size:10px}
+#report th,#report td{border:1px solid #ccd;padding:2px 4px;text-align:center}
+#report th{background:#1f3a5f;color:#fff}
+#report td.l{text-align:left}
+#report .pd{background:#fbe3ec}
+#report .grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+#reportView{position:fixed;inset:0;background:#fff;color:#000;z-index:40;overflow:auto;display:none;padding:14px}
+#reportView.open{display:block}
+#reportView .bar{display:flex;gap:8px;position:sticky;top:0;background:#fff;padding:6px 0 10px}
+@media print{#reportView{display:none!important}}
+</style>
+</head>
+<body>
+<header><h1 id="hTitle">Log</h1><div class="sub" id="hSub"></div></header>
+<main id="main"></main>
+
+<nav id="nav">
+  <button data-tab="log" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Log</button>
+  <button data-tab="day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Entries</button>
+  <button data-tab="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18M7 15l4-4 3 3 5-6"/></svg>Overview</button>
+  <button data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings</button>
+</nav>
+
+<div id="sheetWrap"><div id="sheet"></div></div>
+<div id="toast"><span id="toastMsg"></span><button id="toastUndo">Undo</button><button id="toastMore">Details</button></div>
+<div id="reportView"></div>
+<div id="report"></div>
+
+<script>
+"use strict";
+/* ---------- storage ---------- */
+const KEY="symlog.v1";
+let mem={events:[],meds:["Panzynorm"],nightFrom:22,nightTo:7,theme:"time",customTags:{},hiddenTags:{},lastBackup:null};
+function load(){try{const s=localStorage.getItem(KEY);if(s){const d=JSON.parse(s);mem=Object.assign(mem,d);}}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(mem));}catch(e){alert("Could not save on this device: "+e.message);}}
+load();
+/* ---------- theme: dark 18:00-7:00 ---------- */
+let curTheme=null;
+function applyTheme(){
+  const h=new Date().getHours(),sys=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches;
+  const dark=mem.theme==="dark"||(mem.theme==="time"&&(h>=18||h<7))||(mem.theme==="system"&&sys);
+  const t=dark?"dark":"light";if(t===curTheme)return false;
+  curTheme=t;document.documentElement.dataset.theme=t;
+  const m=document.querySelector('meta[name=theme-color]');if(m)m.content=dark?"#121417":"#1f3a5f";
+  return true;
+}
+applyTheme();
+setInterval(()=>{if(applyTheme()&&typeof render==="function")render();},60000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&applyTheme())render();});
+
+/* ---------- types ---------- */
+const TYPES={
+  nausea:{name:"Nausea",ico:"🤢",col:"nausea",slider:{label:"Intensity",min:0,max:10,step:1,def:5},
+    tags:["after meal","empty stomach","lying down","food helped","vomited"]},
+  stool:{name:"Stool",ico:"🚽",col:"stool",choice:{label:"Consistency",opts:["normal","soft","watery"],def:"soft"},
+    tags:["greasy / oily","pale","floating","foul smell","urgent"]},
+  dizzy:{name:"Dizziness",ico:"💫",col:"dizzy",slider:{label:"Intensity",min:0,max:10,step:1,def:4},
+    tags:["on standing up","after not eating","with nausea","lying down"]},
+  stomach:{name:"Stomach",ico:"😖",col:"stomach",sub:"upper abdomen",slider:{label:"Intensity",min:0,max:10,step:1,def:4},
+    tags:["burning","pressure","cramps","after fatty food","right side under ribs"]},
+  meal:{name:"Meal",ico:"🍽️",col:"food",choice:{label:"Size",opts:["snack","small","normal","large"],def:"normal"},
+    tags:["fatty","dairy","gluten / bread","coffee","alcohol","sweeteners","spicy","late evening"],note:true},
+  med:{name:"Medication",ico:"💊",col:"food",med:true,tags:["with meal","on empty stomach"]},
+  woke:{name:"Woke up",ico:"🌙",col:"sleep",quick:true,tags:["nausea","toilet","stomach","no reason"]},
+  bp:{name:"Blood pressure",ico:"🩺",col:"sleep",bp:true,tags:["sitting","standing","after waking","feeling dizzy","after meal","during period"]},
+  endday:{name:"End of day",ico:"📋",col:"gray",day:true},
+  weight:{name:"Weight",ico:"⚖️",col:"gray",weight:true},
+  alarm:{name:"Warning sign",ico:"⚠️",col:"gray",alarm:true,hidden:true,
+    tags:["black / tarry stool","blood in stool","blood in vomit","fever","severe pain","fainted","can't keep fluids down"],note:true},
+  note:{name:"Note",ico:"📝",col:"gray",note:true,tags:["stress","poor sleep","exercise","travel","illness"]}
+};
+const HOME=["nausea","stool","dizzy","stomach","meal","med","woke","note"];
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const pad=n=>String(n).padStart(2,"0");
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function localISO(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"T"+pad(d.getHours())+":"+pad(d.getMinutes());}
+function dayKey(d){d=new Date(d);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+function hm(ts){const d=new Date(ts);return pad(d.getHours())+":"+pad(d.getMinutes());}
+const DOW=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function nice(d){d=new Date(d);return DOW[d.getDay()]+", "+d.getDate()+" "+MON[d.getMonth()];}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function isNight(ts){const h=new Date(ts).getHours();return h>=mem.nightFrom||h<mem.nightTo;}
+function evDay(k){return mem.events.filter(e=>dayKey(e.ts)===k).sort((a,b)=>a.ts<b.ts?-1:1);}
+function addDays(k,n){const d=new Date(k+"T12:00");d.setDate(d.getDate()+n);return dayKey(d);}
+function dotCol(e){const T=TYPES[e.type]||{col:"gray"};if(T.slider&&e.value!=null&&e.value!=="")return sevSolid(+e.value/10);return `var(--c-${T.col})`;}
+function describe(e){
+  const T=TYPES[e.type]||{name:e.type};let s="";
+  if(e.type==="med")s=esc(e.extra&&e.extra.med||"Medication")+(e.value?" × "+e.value:"");
+  else if(e.type==="endday"){const x=e.extra||{};s="Day "+(x.rating||"–")+"/5"+(x.sleep!=null?" · sleep "+x.sleep+" h":"")+(x.period?" · period":"")+(x.stress!=null?" · stress "+x.stress+"/5":"");}
+  else if(e.type==="weight")s=e.value+" kg";
+  else if(e.type==="bp"){const x=e.extra||{};s=x.sys+"/"+x.dia+" mmHg"+(x.pulse!==""&&x.pulse!=null?" · pulse "+x.pulse:"");}
+  else if(e.value!==undefined&&e.value!==null&&e.value!=="")s=T.slider?e.value+"/10":esc(e.value);
+  const tags=(e.tags||[]).join(", ");
+  return "<b>"+esc(T.name)+"</b> "+s+(tags?"<br><small>"+esc(tags)+"</small>":"")+(e.note?"<br><small>“"+esc(e.note)+"”</small>":"");
+}
+
+/* ---------- detail chips: custom + sorted by use ---------- */
+function tagsFor(t,selected){
+  const T=TYPES[t],hid=(mem.hiddenTags[t]||[]);
+  let list=[...(T.tags||[]),...(mem.customTags[t]||[])].filter(g=>!hid.includes(g));
+  (selected||[]).forEach(g=>{if(!list.includes(g))list.push(g);});
+  list=[...new Set(list)];
+  const cnt={};mem.events.forEach(e=>{if(e.type===t)(e.tags||[]).forEach(g=>cnt[g]=(cnt[g]||0)+1);});
+  return list.map((g,i)=>[g,i]).sort((a,b)=>(cnt[b[0]]||0)-(cnt[a[0]]||0)||a[1]-b[1]).map(x=>x[0]);
+}
+/* ---------- tabs ---------- */
+let tab="log",viewDay=dayKey(new Date());
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{tab=b.dataset.tab;document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));render();window.scrollTo(0,0);});
+function render(){({log:renderLog,day:renderDay,overview:renderOverview,settings:renderSettings})[tab]();}
+
+/* ---------- LOG ---------- */
+function renderLog(){
+  $("#hTitle").textContent="Log";
+  const k=dayKey(new Date()),ev=evDay(k);
+  const n=t=>ev.filter(e=>e.type===t);
+  const mx=t=>{const a=n(t).map(e=>+e.value);return a.length?Math.max(...a):"–";};
+  $("#hSub").textContent=nice(new Date())+(periodOn(k)?" · period":"");
+  let h="";
+  const bd=mem.lastBackup?Math.floor((Date.now()-new Date(mem.lastBackup))/864e5):null;
+  if(mem.events.length>=15&&(bd==null||bd>=7))h+=`<div class="card" style="font-size:14px;display:flex;gap:10px;align-items:center"><span style="flex:1">${bd==null?"No backup yet.":"Last backup "+bd+" days ago."} Save a copy to Google Drive or a folder.</span><button class="ghost" id="lBk">Back up</button></div>`;
+  h+=`<div class="today">Today: ${n("stool").length} stools · nausea max ${mx("nausea")} · dizziness max ${mx("dizzy")} · ${n("woke").length} wake-ups</div><div class="grid">`;
+  for(const t of HOME){const T=TYPES[t];h+=`<button class="big" data-t="${t}" style="background:var(--c-${T.col}-bg);color:var(--c-${T.col})"><span class="ico">${T.ico}</span>${T.name}</button>`;}
+  h+=`</div><div class="row2" style="margin-top:10px">
+   <button class="ghost" data-t="bp">🩺 Blood pressure</button><button class="ghost" data-t="weight">⚖️ Weight</button></div>
+   <div class="row2" style="margin-top:10px"><button class="ghost" data-t="endday">📋 End of day</button></div>
+   <p class="hint" style="margin-top:14px">Tap a button to log it with the current time. Forgot something? Change the time in the form. “Woke up” logs instantly.</p>`;
+  $("#main").innerHTML=h;
+  $("#main").querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{const t=b.dataset.t;if(TYPES[t].quick)quickLog(t);else openSheet(t);});
+  if($("#lBk"))$("#lBk").onclick=backupShare;
+}
+let lastQuick=null,toastT;
+function quickLog(t){
+  const e={id:uid(),ts:localISO(new Date()),type:t,tags:[]};
+  mem.events.push(e);save();lastQuick=e;render();
+  $("#toastMsg").textContent=TYPES[t].name+" logged "+hm(e.ts);
+  const to=$("#toast");to.style.display="flex";clearTimeout(toastT);toastT=setTimeout(()=>to.style.display="none",5000);
+}
+$("#toastUndo").onclick=()=>{if(lastQuick){mem.events=mem.events.filter(e=>e.id!==lastQuick.id);save();lastQuick=null;render();}$("#toast").style.display="none";};
+$("#toastMore").onclick=()=>{$("#toast").style.display="none";if(lastQuick)openSheet(lastQuick.type,lastQuick);};
+
+/* ---------- SHEET ---------- */
+let cur=null;
+function openSheet(t,existing){
+  const T=TYPES[t];const e=existing?JSON.parse(JSON.stringify(existing)):{id:uid(),ts:localISO(new Date()),type:t,tags:[],extra:{}};
+  e.extra=e.extra||{};e.tags=e.tags||[];
+  if(!existing){
+    if(T.slider)e.value=T.slider.def;
+    if(T.choice)e.value=T.choice.def;
+    if(T.med){e.value=1;e.extra.med=mem.meds[0]||"";e.tags=["with meal"];}
+    if(T.day){const y=new Date();if(y.getHours()<12){y.setDate(y.getDate()-1);y.setHours(22,0,0,0);e.ts=localISO(y);}
+      e.extra={rating:3,sleep:6,period:periodOn(dayKey(e.ts))||periodOn(addDays(dayKey(e.ts),-1)),stress:2};}
+    if(T.bp)e.extra={sys:"",dia:"",pulse:""};
+    if(T.weight){const w=mem.events.filter(x=>x.type==="weight").sort((a,b)=>a.ts<b.ts?1:-1)[0];e.value=w?w.value:"";}
+  }
+  cur={e,existing:!!existing};
+  let h=`<h2>${T.ico} ${T.name}</h2>${T.sub?`<div class="hint">${T.sub}</div>`:""}
+  <div class="lbl">${T.day?"Day":"Time"}</div><div class="time"><input type="datetime-local" id="fTs" value="${e.ts}">
+  <button id="fNow">Now</button><button id="fM30">−30m</button></div>`;
+  if(T.slider)h+=`<div class="lbl">${T.slider.label}</div><input type="range" id="fVal" min="${T.slider.min}" max="${T.slider.max}" step="${T.slider.step}" value="${e.value}">
+    <div class="slv"><span>none</span><b id="fValOut">${e.value}</b><span>worst</span></div>`;
+  if(T.choice)h+=`<div class="lbl">${T.choice.label}</div><div class="seg" id="fChoice">${T.choice.opts.map(o=>`<button class="chip${o===e.value?" on":""}" data-v="${esc(o)}">${esc(o)}</button>`).join("")}</div>`;
+  if(T.med){
+    h+=`<div class="lbl">Medication</div><div class="chips" id="fMed">${mem.meds.map(m=>`<button class="chip${m===e.extra.med?" on":""}" data-v="${esc(m)}">${esc(m)}</button>`).join("")||'<span class="hint">Add medications in Settings.</span>'}</div>
+    <div class="lbl">Tablets / doses</div><div class="stepper"><button id="fMinus">−</button><b id="fCount">${e.value}</b><button id="fPlus">+</button></div>`;
+  }
+  if(T.day){const x=e.extra;
+    h+=`<div class="lbl">Overall day (1 = very bad, 5 = good)</div><div class="seg" id="fRating">${[1,2,3,4,5].map(v=>`<button class="chip${v===x.rating?" on":""}" data-v="${v}">${v}</button>`).join("")}</div>
+    <div class="lbl">Sleep last night (hours)</div><input type="range" id="fSleep" min="0" max="12" step="0.5" value="${x.sleep}"><div class="slv"><span>0</span><b id="fSleepOut">${x.sleep}</b><span>12</span></div>
+    <div class="lbl">Stress (0–5)</div><input type="range" id="fStress" min="0" max="5" step="1" value="${x.stress}"><div class="slv"><span>calm</span><b id="fStressOut">${x.stress}</b><span>high</span></div>
+    <div class="lbl">Period</div><div class="seg" id="fPeriod"><button class="chip${x.period?" on":""}" data-v="1">Yes</button><button class="chip${!x.period?" on":""}" data-v="0">No</button></div>`;}
+  if(T.weight)h+=`<div class="lbl">Weight (kg) – same scale, morning, before breakfast</div><input class="num" id="fW" type="text" inputmode="decimal" autocomplete="off" value="${e.value}"><div class="hint" id="fWErr" style="color:var(--danger)"></div>`;
+  if(T.bp){const x=e.extra;h+=`<div class="lbl">Blood pressure (mmHg) and pulse</div><div class="row2">
+    <label class="hint">Upper (systolic)<input class="num" id="fSys" inputmode="numeric" value="${esc(x.sys)}" placeholder="120"></label>
+    <label class="hint">Lower (diastolic)<input class="num" id="fDia" inputmode="numeric" value="${esc(x.dia)}" placeholder="80"></label>
+    <label class="hint">Pulse<input class="num" id="fPul" inputmode="numeric" value="${esc(x.pulse)}" placeholder="70"></label></div><div class="hint" id="fBpErr" style="color:var(--danger)"></div>`;}
+  if(T.tags){const tl=tagsFor(t,e.tags);h+=`<div class="lbl">Details (optional)</div><div class="chips" id="fTags">${tl.map(g=>`<button class="chip${e.tags.includes(g)?" on":""}" data-v="${esc(g)}">${esc(g)}</button>`).join("")}<button class="chip" id="fAddTag" style="border-style:dashed">+ new</button></div>`;}
+  h+=`<div class="lbl">Note${T.note?"":" (optional)"}</div><textarea id="fNote" rows="2" placeholder="${t==="meal"?"pasta with cream sauce":"anything else"}">${esc(e.note||"")}</textarea>`;
+  h+=`<div class="actions">${existing?'<button class="danger" id="fDel">Delete</button>':'<button class="ghost" id="fCancel">Cancel</button>'}<button class="primary" id="fSave">Save</button></div>`;
+  $("#sheet").innerHTML=h;$("#sheetWrap").classList.add("open");$("#sheet").scrollTop=0;
+  const ts=$("#fTs");
+  $("#fNow").onclick=()=>ts.value=localISO(new Date());
+  $("#fM30").onclick=()=>{const d=new Date(ts.value||Date.now());d.setMinutes(d.getMinutes()-30);ts.value=localISO(d);};
+  const bindSl=(id,out,fn)=>{const s=$(id);if(s)s.oninput=()=>{$(out).textContent=s.value;fn(+s.value);};};
+  bindSl("#fVal","#fValOut",v=>e.value=v);
+  const paint=()=>{const s=$("#fVal");if(!s)return;const f=(+s.value)/(+s.max);s.style.accentColor=sevSolid(f);$("#fValOut").style.color=sevSolid(f);};
+  if($("#fVal")){paint();$("#fVal").addEventListener("input",paint);}
+  bindSl("#fSleep","#fSleepOut",v=>e.extra.sleep=v);
+  bindSl("#fStress","#fStressOut",v=>e.extra.stress=v);
+  const single=(id,fn)=>{const g=$(id);if(g)g.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{g.querySelectorAll(".chip").forEach(x=>x.classList.remove("on"));c.classList.add("on");fn(c.dataset.v);});};
+  single("#fChoice",v=>e.value=v);single("#fMed",v=>e.extra.med=v);
+  single("#fRating",v=>e.extra.rating=+v);single("#fPeriod",v=>e.extra.period=v==="1");
+  ["#fSys","#fDia","#fPul"].forEach(id=>{if($(id))$(id).oninput=()=>$("#fBpErr").textContent="";});
+  if($("#fAddTag"))$("#fAddTag").onclick=()=>{const v=(prompt("New detail for "+T.name+":")||"").trim();if(!v)return;
+    mem.customTags[t]=mem.customTags[t]||[];if(!mem.customTags[t].includes(v))mem.customTags[t].push(v);
+    mem.hiddenTags[t]=(mem.hiddenTags[t]||[]).filter(x=>x!==v);save();
+    const c=document.createElement("button");c.className="chip on";c.dataset.v=v;c.textContent=v;e.tags.push(v);
+    c.onclick=()=>{c.classList.toggle("on");e.tags=c.classList.contains("on")?[...e.tags,v]:e.tags.filter(x=>x!==v);};
+    $("#fAddTag").before(c);};
+  const tg=$("#fTags");if(tg)tg.querySelectorAll(".chip:not(#fAddTag)").forEach(c=>c.onclick=()=>{c.classList.toggle("on");const v=c.dataset.v;e.tags=c.classList.contains("on")?[...e.tags,v]:e.tags.filter(x=>x!==v);});
+  if($("#fPlus")){$("#fPlus").onclick=()=>{e.value=Math.min(20,(+e.value||0)+1);$("#fCount").textContent=e.value;};$("#fMinus").onclick=()=>{e.value=Math.max(0,(+e.value||0)-1);$("#fCount").textContent=e.value;};}
+  if($("#fCancel"))$("#fCancel").onclick=closeSheet;
+  if($("#fDel"))$("#fDel").onclick=()=>{if(confirm("Delete this entry?")){mem.events=mem.events.filter(x=>x.id!==e.id);save();closeSheet();render();}};
+  $("#fSave").onclick=()=>{
+    if(!ts.value){ts.focus();return;}
+    e.ts=ts.value;e.note=$("#fNote").value.trim();
+    if(T.weight){const w=parseFloat(String($("#fW").value).replace(",","."));if(!(w>=20&&w<=250)){$("#fWErr").textContent="Enter weight in kg, e.g. 61.5";return;}e.value=Math.round(w*10)/10;}
+    if(T.bp){const n=id=>{const v=String($(id).value).trim();return v===""?"":parseInt(v,10);};const sy=n("#fSys"),di=n("#fDia"),pu=n("#fPul");
+      if(!(sy>=60&&sy<=260)||!(di>=30&&di<=160)||!(di<sy)){$("#fBpErr").textContent="Enter upper and lower value, e.g. 120 and 80";return;}
+      if(pu!==""&&!(pu>=30&&pu<=220)){$("#fBpErr").textContent="Pulse looks wrong (30–220), or leave it empty";return;}
+      e.extra={sys:sy,dia:di,pulse:pu};e.value=sy+"/"+di;}
+    mem.events=mem.events.filter(x=>x.id!==e.id);mem.events.push(e);save();closeSheet();render();
+  };
+}
+function closeSheet(){$("#sheetWrap").classList.remove("open");}
+$("#sheetWrap").onclick=ev=>{if(ev.target.id==="sheetWrap")closeSheet();};
+
+/* ---------- DAY ---------- */
+function periodOn(k){return mem.events.some(e=>e.type==="endday"&&dayKey(e.ts)===k&&e.extra&&e.extra.period);}
+let dayMode="day",fType="all",fShow=60;
+function renderDay(){
+  if(dayMode==="all")return renderAll();
+  $("#hTitle").textContent="Entries";$("#hSub").textContent="Tap an entry to edit or delete";
+  const ev=evDay(viewDay),isToday=viewDay===dayKey(new Date());
+  let h=modeSeg()+`<div class="dayhead"><button id="dPrev">‹</button><span class="d">${isToday?"Today, ":""}${nice(viewDay+"T12:00")}${periodOn(viewDay)?" · period":""}</span><button id="dNext">›</button></div><div class="card">`;
+  if(!ev.length)h+=`<div class="empty">Nothing logged on this day.</div>`;
+  for(const e of ev){const T=TYPES[e.type]||{col:"gray"};h+=`<div class="ev" data-id="${e.id}"><span class="t">${hm(e.ts)}</span><span class="dot" style="background:${dotCol(e)}"></span><span class="x">${describe(e)}</span></div>`;}
+  h+=`</div>`;
+  if(!ev.some(e=>e.type==="endday"))h+=`<button class="ghost" style="width:100%" id="dEnd">📋 Add end-of-day summary</button>`;
+  $("#main").innerHTML=h;
+  bindMode();
+  $("#dPrev").onclick=()=>{viewDay=addDays(viewDay,-1);renderDay();};
+  $("#dNext").onclick=()=>{viewDay=addDays(viewDay,1);renderDay();};
+  $("#main").querySelectorAll(".ev").forEach(r=>r.onclick=()=>{const e=mem.events.find(x=>x.id===r.dataset.id);if(e)openSheet(e.type,e);});
+  if($("#dEnd"))$("#dEnd").onclick=()=>{openSheet("endday");const d=new Date(viewDay+"T22:00");$("#fTs").value=localISO(d);};
+}
+
+function modeSeg(){return `<div class="seg" id="dMode"><button class="chip${dayMode==="day"?" on":""}" data-v="day">By day</button><button class="chip${dayMode==="all"?" on":""}" data-v="all">All entries</button></div>`;}
+function bindMode(){$("#dMode").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{dayMode=b.dataset.v;fShow=60;renderDay();});}
+function renderAll(){
+  $("#hTitle").textContent="Entries";$("#hSub").textContent="Tap an entry to edit or delete";
+  const used=[...new Set(mem.events.map(e=>e.type))].filter(t=>TYPES[t]);
+  let list=[...mem.events].filter(e=>fType==="all"||e.type===fType).sort((a,b)=>a.ts<b.ts?1:-1);
+  const total=list.length;list=list.slice(0,fShow);
+  let h=modeSeg()+`<div class="chips" id="fFilt" style="margin:10px 0"><button class="chip${fType==="all"?" on":""}" data-v="all">All (${mem.events.length})</button>${used.map(t=>`<button class="chip${fType===t?" on":""}" data-v="${t}">${TYPES[t].ico} ${TYPES[t].name} (${mem.events.filter(e=>e.type===t).length})</button>`).join("")}</div>`;
+  if(!total)h+=`<div class="card"><div class="empty">No entries yet.</div></div>`;
+  let lastK="";
+  for(const e of list){const k=dayKey(e.ts);if(k!==lastK){if(lastK)h+=`</div>`;h+=`<div class="lbl">${nice(k+"T12:00")}${periodOn(k)?" · period":""}</div><div class="card" style="margin-top:0">`;lastK=k;}
+    const T=TYPES[e.type]||{col:"gray"};h+=`<div class="ev" data-id="${e.id}"><span class="t">${hm(e.ts)}</span><span class="dot" style="background:${dotCol(e)}"></span><span class="x">${describe(e)}</span></div>`;}
+  if(lastK)h+=`</div>`;
+  if(total>fShow)h+=`<button class="ghost" style="width:100%" id="fMore">Show more (${total-fShow} older)</button>`;
+  $("#main").innerHTML=h;bindMode();
+  $("#fFilt").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{fType=b.dataset.v;fShow=60;renderAll();});
+  if($("#fMore"))$("#fMore").onclick=()=>{fShow+=100;renderAll();};
+  $("#main").querySelectorAll(".ev").forEach(r=>r.onclick=()=>{const e=mem.events.find(x=>x.id===r.dataset.id);if(e)openSheet(e.type,e);});
+}
+
+/* ---------- daily aggregation ---------- */
+function daily(k){
+  const ev=evDay(k),by=t=>ev.filter(e=>e.type===t),mx=t=>{const a=by(t).map(e=>+e.value);return a.length?Math.max(...a):null;};
+  const st=by("stool"),ed=by("endday").slice(-1)[0],w=by("weight").slice(-1)[0];
+  const meals=by("meal"),meds=by("med");
+  const o={k,nausea:mx("nausea"),dizzy:mx("dizzy"),stomach:mx("stomach"),
+    stools:st.length,greasy:st.filter(e=>(e.tags||[]).some(t=>/greasy|pale|floating/.test(t))).length,watery:st.filter(e=>e.value==="watery").length,
+    nightN:by("nausea").filter(e=>isNight(e.ts)).length,
+    sys:(()=>{const a=by("bp").map(e=>+e.extra.sys);return a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):null;})(),
+    dia:(()=>{const a=by("bp").map(e=>+e.extra.dia);return a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):null;})(),
+    pulse:(()=>{const a=by("bp").map(e=>e.extra.pulse).filter(v=>v!==""&&v!=null).map(Number);return a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):null;})(),
+    bpTxt:by("bp").map(e=>e.extra.sys+"/"+e.extra.dia).join(", "),
+    woke:by("woke").length,meals:meals.length,fatty:meals.filter(e=>(e.tags||[]).includes("fatty")).length,
+    meds:meds.reduce((s,e)=>s+(+e.value||0),0),medsWithMeal:meds.filter(e=>(e.tags||[]).includes("with meal")).length,medN:meds.length,
+    rating:ed?ed.extra.rating:null,sleep:ed?ed.extra.sleep:null,stress:ed?ed.extra.stress:null,period:!!(ed&&ed.extra.period),
+    weight:w?+w.value:null,alarm:by("alarm").length,
+    vomited:by("nausea").filter(e=>(e.tags||[]).includes("vomited")).length,
+    late:meals.filter(e=>new Date(e.ts).getHours()>=20||(e.tags||[]).includes("late evening")).length,
+    notes:ev.filter(e=>e.note).map(e=>hm(e.ts)+" "+TYPES[e.type].name+": "+e.note).join("; ")};
+  meals.forEach(e=>(e.tags||[]).forEach(t=>{if(t!=="late evening")o["food:"+t]=(o["food:"+t]||0)+1;}));
+  by("note").forEach(e=>(e.tags||[]).forEach(t=>o["note:"+t]=(o["note:"+t]||0)+1));
+  meds.forEach(e=>{const m="med:"+(e.extra&&e.extra.med||"?");o[m]=(o[m]||0)+(+e.value||1);});
+  return o;
+}
+function firstDay(){if(!mem.events.length)return dayKey(new Date());return dayKey(mem.events.reduce((m,e)=>e.ts<m?e.ts:m,mem.events[0].ts));}
+function spanDays(sp){if(sp!=="all")return sp;const a=new Date(firstDay()+"T12:00"),b=new Date(dayKey(new Date())+"T12:00");return Math.max(1,Math.round((b-a)/864e5)+1);}
+function range(n){const out=[];let k=dayKey(new Date());for(let i=n-1;i>=0;i--)out.push(daily(addDays(k,-i)));return out;}
+
+/* ---------- charts (SVG, no libraries) ---------- */
+function chart(days,key,o){
+  o=Object.assign({max:10,type:"line",col:"#d85a30",h:70,unit:""},o||{});
+  const W=320,H=o.h,pl=22,pr=4,pt=6,pb=14,n=days.length,cw=(W-pl-pr)/n;
+  let vals=days.map(d=>d[key]).concat(o.key2?days.map(d=>d[o.key2]):[]);let mn=0,mx=o.max;
+  if(o.auto){const v=vals.filter(x=>x!=null);if(v.length){mn=Math.floor(Math.min(...v)-1);mx=Math.ceil(Math.max(...v)+1);}else{mn=0;mx=1;}}
+  const y=v=>pt+(H-pt-pb)*(1-(v-mn)/((mx-mn)||1));
+  let s=`<svg class="ch" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+  days.forEach((d,i)=>{if(d.period)s+=`<rect x="${pl+i*cw}" y="${pt}" width="${cw}" height="${H-pt-pb}" fill="var(--period,#fbe3ec)"/>`;});
+  [mn,mx].forEach(v=>s+=`<text x="${pl-3}" y="${y(v)+3}" font-size="8" text-anchor="end" fill="#8a929c">${v}</text><line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="#8a929c" stroke-opacity=".25" stroke-width=".5"/>`);
+  if(o.type==="bar"){days.forEach((d,i)=>{const v=d[key]||0;if(v){s+=`<rect x="${pl+i*cw+cw*.18}" y="${y(Math.min(v,mx))}" width="${cw*.64}" height="${y(mn)-y(Math.min(v,mx))}" fill="${o.col}" rx="1"/>`;
+      if(o.sub&&d[o.sub])s+=`<rect x="${pl+i*cw+cw*.18}" y="${y(Math.min(d[o.sub],mx))}" width="${cw*.64}" height="${y(mn)-y(Math.min(d[o.sub],mx))}" fill="${o.subCol}" rx="1"/>`;}});}
+  else{const line=(k,col)=>{let pts=[];days.forEach((d,i)=>{const v=d[k];if(v!=null){const X=pl+i*cw+cw/2,Y=y(v);pts.push(X+","+Y);s+=`<circle cx="${X}" cy="${Y}" r="2.2" fill="${col}"/>`;}else if(!o.connect){if(pts.length>1)s+=`<polyline points="${pts.join(" ")}" fill="none" stroke="${col}" stroke-width="1.5"/>`;pts=[];}});
+    if(pts.length>1)s+=`<polyline points="${pts.join(" ")}" fill="none" stroke="${col}" stroke-width="1.5"/>`;};
+    line(key,o.col);if(o.key2)line(o.key2,o.col2||o.col);}
+  const step=Math.ceil(n/7);days.forEach((d,i)=>{if(i%step===0||(i===n-1&&(n-1)%step>=step/2)){const dt=new Date(d.k+"T12:00");s+=`<text x="${pl+i*cw+cw/2}" y="${H-3}" font-size="8" text-anchor="middle" fill="#8a929c">${dt.getDate()}.${dt.getMonth()+1}.</text>`;}});
+  return s+"</svg>";
+}
+const avg=a=>{a=a.filter(x=>x!=null);return a.length?Math.round(a.reduce((s,x)=>s+x,0)/a.length*10)/10:"–";};
+
+/* ---------- severity colour: 0 = green, 1 = red ---------- */
+function sevBg(f,print){f=Math.max(0,Math.min(1,f));const h=Math.round(120-120*f);return `hsla(${h},${print?70:72}%,${print?50:46}%,${(0.28+0.62*f).toFixed(2)})`;}
+function sevFg(f){return f>0.5?"#fff":"inherit";}
+function sevSolid(f){f=Math.max(0,Math.min(1,f));return `hsl(${Math.round(120-120*f)},70%,42%)`;}
+/* ---------- DIAGNOSTIC: helpers ---------- */
+const r1=v=>v==null?null:Math.round(v*10)/10;
+const mean=a=>{a=a.filter(v=>v!=null&&!isNaN(v));return a.length?a.reduce((x,y)=>x+y,0)/a.length:null;};
+const pct=(a,n)=>n?Math.round(a/n*100):0;
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+function evIn(D,type){const from=D[0].k,to=D[D.length-1].k;return mem.events.filter(e=>(!type||e.type===type)&&dayKey(e.ts)>=from&&dayKey(e.ts)<=to).sort((a,b)=>a.ts<b.ts?-1:1);}
+function loggedDays(D){return D.filter(d=>evDay(d.k).length);}
+function dynKeys(D,prefix){const c={};D.forEach(d=>Object.keys(d).forEach(k=>{if(k.startsWith(prefix)&&d[k])c[k]=(c[k]||0)+d[k];}));return Object.keys(c).sort((a,b)=>c[b]-c[a]);}
+const dynLabel=k=>{const [p,n]=k.split(/:(.*)/s);return p==="food"?cap(n):p==="note"?cap(n)+" (note)":p==="med"?n:k;};
+function ts2h(ts){return new Date(ts).getTime()/36e5;}
+function tblOpen(print,fs){return `<table style="border-collapse:collapse;width:100%;font-size:${print?9:fs||12}px">`;}
+function thRow(cols,print){const mut=print?"#777":"var(--muted)";return `<tr style="color:${mut}">${cols.map((c,i)=>`<th style="font-weight:500;text-align:${i?"center":"left"};padding:2px 3px">${c}</th>`).join("")}</tr>`;}
+const ln=print=>print?"#dde":"var(--line)";
+
+/* ---------- week aggregation ---------- */
+function aggWeek(days){
+  const act=days.filter(d=>evDay(d.k).length),A=f=>mean(act.map(f));
+  const mxs=f=>{const a=act.map(f).filter(v=>v!=null);return a.length?Math.max(...a):null;};
+  const ws=days.filter(d=>d.weight!=null);
+  const o={k:days[0].k,k2:days[days.length-1].k,n:act.length,
+    nausea:r1(A(d=>d.nausea)),nauseaMax:mxs(d=>d.nausea),dizzy:r1(A(d=>d.dizzy)),stomach:r1(A(d=>d.stomach)),vomited:r1(A(d=>d.vomited)),
+    stools:r1(A(d=>d.stools)),greasy:r1(A(d=>d.greasy)),watery:r1(A(d=>d.watery)),nightN:r1(A(d=>d.nightN)),woke:r1(A(d=>d.woke)),
+    sleep:r1(A(d=>d.sleep)),rating:r1(A(d=>d.rating)),stress:r1(A(d=>d.stress)),meals:r1(A(d=>d.meals)),late:r1(A(d=>d.late)),fatty:r1(A(d=>d.fatty)),medN:r1(A(d=>d.medN)),
+    sys:A(d=>d.sys)==null?null:Math.round(A(d=>d.sys)),dia:A(d=>d.dia)==null?null:Math.round(A(d=>d.dia)),pulse:A(d=>d.pulse)==null?null:Math.round(A(d=>d.pulse)),
+    weight:ws.length?ws[ws.length-1].weight:null,periodDays:days.filter(d=>d.period).length,period:days.some(d=>d.period)};
+  const keys=new Set();days.forEach(d=>Object.keys(d).forEach(k=>{if(/^(food|note|med):/.test(k))keys.add(k);}));
+  keys.forEach(k=>o[k]=r1(A(d=>d[k]||0)));
+  return o;
+}
+function toWeeks(D){
+  const out=[];let cur=[];
+  D.forEach(d=>{const wd=(new Date(d.k+"T12:00").getDay()+6)%7;if(wd===0&&cur.length){out.push(cur);cur=[];}cur.push(d);});
+  if(cur.length)out.push(cur);return out.map(aggWeek);
+}
+
+/* ---------- grid of all parameters ---------- */
+function gridRows(D){
+  const any=k=>D.some(d=>d[k]);
+  const rows=[{h:"Symptoms"},{k:"nausea",l:"Nausea",max:10},{k:"nightN",l:"Night nausea",max:3}];
+  if(any("vomited"))rows.push({k:"vomited",l:"Vomited",max:2});
+  rows.push({k:"dizzy",l:"Dizziness",max:10},{k:"stomach",l:"Stomach",max:10},
+    {h:"Stool"},{k:"stools",l:"Stools",max:5},{k:"greasy",l:"Greasy/pale",max:3});
+  if(any("watery"))rows.push({k:"watery",l:"Watery",max:3});
+  rows.push({h:"Sleep and day"},{k:"woke",l:"Wake-ups",max:3},{k:"sleep",l:"Sleep h",inv:v=>(8-v)/4},{k:"rating",l:"Day 1–5",inv:v=>(5-v)/4});
+  if(D.some(d=>d.stress!=null))rows.push({k:"stress",l:"Stress 0–5",max:5});
+  const foods=dynKeys(D,"food:"),meds=dynKeys(D,"med:"),notes=dynKeys(D,"note:");
+  if(any("meals")){rows.push({h:"Food"},{k:"meals",l:"Meals",max:6,neutral:true});if(any("late"))rows.push({k:"late",l:"Late meal",max:2,neutral:true});
+    foods.forEach(k=>rows.push({k,l:dynLabel(k),max:3,neutral:true}));}
+  if(meds.length){rows.push({h:"Medication"});meds.forEach(k=>rows.push({k,l:dynLabel(k),max:6,neutral:true}));}
+  rows.push({h:"Body"},{k:"bp",l:"BP",text:true},{k:"weight",l:"Weight",text:true},{h:"Other"},{k:"period",l:"Period",period:true});
+  notes.forEach(k=>rows.push({k,l:dynLabel(k),max:1,neutral:true}));
+  return rows;
+}
+function gridHTML(cols,mode,print,D){
+  const rows=gridRows(D||cols);
+  const fg=print?"#000":"var(--text)",mut=print?"#777":"var(--muted)",lnc=ln(print),bgc=print?"#fff":"var(--card)";
+  const cw=mode==="week"?44:30;
+  let h=`<table style="border-collapse:separate;border-spacing:2px;font-size:${print?9:11}px;color:${fg}"><tr><th style="position:sticky;left:0;background:${bgc};text-align:left;font-weight:600;min-width:84px"></th>`;
+  cols.forEach(c=>{const d=new Date(c.k+"T12:00");h+=`<th data-k="${c.k}" style="min-width:${cw}px;font-weight:500;color:${mut};line-height:1.1;${mode==="day"&&!print?"cursor:pointer":""}">${mode==="day"?DOW[d.getDay()].slice(0,2)+"<br>"+d.getDate()+"."+(d.getMonth()+1)+".":d.getDate()+"."+(d.getMonth()+1)+".<br><span style='font-size:9px'>"+c.n+" d</span>"}</th>`;});
+  h+=`</tr>`;
+  for(const r of rows){
+    if(r.h){h+=`<tr><td style="position:sticky;left:0;background:${bgc};font-weight:600;color:${mut};padding-top:5px;font-size:${print?8:10}px">${r.h.toUpperCase()}</td><td colspan="${cols.length}"></td></tr>`;continue;}
+    h+=`<tr><td style="position:sticky;left:0;background:${bgc};white-space:nowrap;padding-right:6px;max-width:110px;overflow:hidden;text-overflow:ellipsis">${esc(r.l)}</td>`;
+    for(const c of cols){
+      const empty=mode==="day"?!evDay(c.k).length:!c.n;let v=r.k==="bp"?null:c[r.k],txt="",bg="transparent";
+      if(v===undefined&&/^(food|note|med):/.test(r.k))v=empty?null:0;
+      if(r.period){if(c.period){bg="rgba(212,83,126,.35)";txt=mode==="week"?c.periodDays:"●";}}
+      else if(r.k==="bp"){if(c.sys!=null)txt=`${c.sys}<br>${c.dia}`;}
+      else if(r.text){if(v!=null)txt=mode==="week"||v>=100?Math.round(v):v;}
+      else if(v!=null&&!empty){
+        const f=Math.max(0,Math.min(1,r.inv?r.inv(v):v/r.max));
+        if(r.neutral){if(v>0)bg=`rgba(55,138,221,${(0.15+0.55*f).toFixed(2)})`;txt=v===0?"·":(Number.isInteger(v)?v:v.toFixed(1));if(f>0.6)txt=`<span style="color:#fff;font-weight:600">${txt}</span>`;}
+        else{bg=sevBg(f,print);txt=Number.isInteger(v)?v:v.toFixed(1);if(f>0.5)txt=`<span style="color:#fff;font-weight:600">${txt}</span>`;}
+      }
+      if(empty&&!r.period)txt=`<span style="color:${mut}">–</span>`;
+      h+=`<td style="background:${bg};text-align:center;border-radius:4px;height:${r.k==="bp"?28:20}px;line-height:1.05;outline:.5px solid ${lnc}">${txt}</td>`;}
+    h+=`</tr>`;}
+  return h+`</table>`;
+}
+
+/* ---------- time of day ---------- */
+const BLOCKS=[[0,3],[3,6],[6,9],[9,12],[12,15],[15,18],[18,21],[21,24]];
+function todHTML(D,print){
+  const ev=evIn(D);
+  const rows=[["nausea","Nausea","216,90,48"],["dizzy","Dizziness","83,74,183"],["stomach","Stomach","153,53,86"],["stool","Stools","186,117,23"],["woke","Wake-ups","24,95,165"],["meal","Meals","15,110,86"],["med","Medication","15,110,86"]];
+  const fg=print?"#000":"var(--text)",mut=print?"#777":"var(--muted)";
+  let h=`<table style="border-collapse:separate;border-spacing:2px;font-size:${print?9:11}px;color:${fg};width:100%"><tr><th></th>${BLOCKS.map(b=>`<th style="font-weight:500;color:${mut}">${b[0]}–${b[1]}</th>`).join("")}</tr>`;
+  for(const [t,l,c] of rows){const cnt=BLOCKS.map(b=>ev.filter(e=>e.type===t&&new Date(e.ts).getHours()>=b[0]&&new Date(e.ts).getHours()<b[1]).length);if(!cnt.some(x=>x))continue;const mx=Math.max(1,...cnt);
+    h+=`<tr><td style="white-space:nowrap;padding-right:6px">${l}</td>${cnt.map(n=>{const f=n/mx;return `<td style="text-align:center;border-radius:4px;height:20px;background:${n?`rgba(${c},${(0.12+0.68*f).toFixed(2)})`:"transparent"}">${n?(f>0.55?`<span style="color:#fff;font-weight:600">${n}</span>`:n):`<span style="color:${mut}">·</span>`}</td>`;}).join("")}</tr>`;}
+  return h+`</table>`;
+}
+
+/* ---------- key facts ---------- */
+function weightTrend(D){
+  const w=evIn(D,"weight").map(e=>({x:ts2h(e.ts)/24,y:+e.value}));if(w.length<2)return null;
+  const span=w[w.length-1].x-w[0].x;if(span<5)return null;
+  const mx=mean(w.map(p=>p.x)),my=mean(w.map(p=>p.y));let a=0,b=0;w.forEach(p=>{a+=(p.x-mx)*(p.y-my);b+=(p.x-mx)**2;});
+  return{perWeek:Math.round(a/b*7*10)/10,total:Math.round((w[w.length-1].y-w[0].y)*10)/10,from:w[0].y,to:w[w.length-1].y};
+}
+function keyFactsHTML(D,print){
+  const L=loggedDays(D),n=L.length,mut=print?"#777":"var(--muted)";
+  if(!n)return `<div class="hint">Nothing logged in this period.</div>`;
+  const wt=weightTrend(D),meals=evIn(D,"meal"),meds=evIn(D,"med");
+  const covered=meals.filter(m=>meds.some(x=>Math.abs(ts2h(x.ts)-ts2h(m.ts))<=0.75)).length;
+  const nau=evIn(D,"nausea");
+  const facts=[
+    ["Days logged",n+" of "+D.length],
+    ["Days with nausea",pct(L.filter(d=>d.nausea).length,n)+"%"],
+    ["Avg daily max nausea",r1(mean(L.map(d=>d.nausea||0)))],
+    ["Nausea at night",nau.length?pct(nau.filter(e=>isNight(e.ts)).length,nau.length)+"% of episodes":"–"],
+    ["Stools per day",r1(mean(L.map(d=>d.stools)))],
+    ["Greasy / pale stools",(()=>{const s=evIn(D,"stool");return s.length?pct(s.filter(e=>(e.tags||[]).some(t=>/greasy|pale|floating/.test(t))).length,s.length)+"% of stools":"–";})()],
+    ["Wake-ups per night",r1(mean(L.map(d=>d.woke)))],
+    ["Avg sleep",(()=>{const v=mean(L.map(d=>d.sleep));return v==null?"–":r1(v)+" h";})()],
+    ["Weight",wt?`${wt.from} → ${wt.to} kg (${wt.perWeek>0?"+":""}${wt.perWeek} kg/week)`:"–"],
+    ["Meals with medication",meds.length&&meals.length?pct(covered,meals.length)+"% of "+meals.length+" meals":"–"]];
+  return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;font-size:${print?9:13}px">${facts.map(([l,v])=>`<div style="display:flex;justify-content:space-between;border-bottom:.5px solid ${ln(print)};padding:3px 0"><span style="color:${mut}">${l}</span><b style="text-align:right">${v}</b></div>`).join("")}</div>`;
+}
+
+/* ---------- after-meal analysis (0–4 h after each meal) ---------- */
+const WIN=4;
+function mealOutcomes(D){
+  const meals=evIn(D,"meal"),all=mem.events.filter(e=>["nausea","stomach","dizzy","stool","med"].includes(e.type));
+  return meals.map(m=>{const t=ts2h(m.ts);
+    const w=all.filter(e=>{const x=ts2h(e.ts);return x>t&&x<=t+WIN;});
+    const mx=ty=>{const a=w.filter(e=>e.type===ty).map(e=>+e.value);return a.length?Math.max(...a):0;};
+    const st=w.filter(e=>e.type==="stool");
+    const covered=all.some(e=>e.type==="med"&&Math.abs(ts2h(e.ts)-t)<=0.75);
+    return{m,tags:m.tags||[],size:m.value,hour:new Date(m.ts).getHours(),nau:mx("nausea"),sto:mx("stomach"),diz:mx("dizzy"),stool:st.length>0,greasy:st.some(e=>(e.tags||[]).some(g=>/greasy|pale|floating/.test(g))),covered};});
+}
+function afterMealHTML(D,print){
+  const O=mealOutcomes(D),mut=print?"#777":"var(--muted)";
+  if(O.length<3)return `<div class="hint" style="color:${mut}">Needs at least 3 logged meals.</div>`;
+  const stat=a=>({n:a.length,nP:pct(a.filter(o=>o.nau>0).length,a.length),nA:r1(mean(a.map(o=>o.nau))),sP:pct(a.filter(o=>o.sto>0).length,a.length),dP:pct(a.filter(o=>o.diz>0).length,a.length),stP:pct(a.filter(o=>o.stool).length,a.length),gP:pct(a.filter(o=>o.greasy).length,a.length)});
+  const base=stat(O);const groups=[["All meals",O,true]];
+  const tags={};O.forEach(o=>o.tags.forEach(t=>tags[t]=(tags[t]||0)+1));
+  Object.keys(tags).filter(t=>t!=="late evening").sort((a,b)=>tags[b]-tags[a]).forEach(t=>{const a=O.filter(o=>o.tags.includes(t));if(a.length>=2)groups.push([cap(t),a]);});
+  ["large","normal","small","snack"].forEach(sz=>{const a=O.filter(o=>o.size===sz);if(a.length>=2&&a.length<O.length)groups.push([cap(sz)+" meal",a]);});
+  const ev=O.filter(o=>o.hour>=20||o.tags.includes("late evening"));if(ev.length>=2&&ev.length<O.length)groups.push(["Late (after 20:00)",ev]);
+  if(O.some(o=>o.covered)){const c=O.filter(o=>o.covered),u=O.filter(o=>!o.covered);if(c.length>=2)groups.push(["With medication",c]);if(u.length>=2)groups.push(["Without medication",u]);}
+  const cell=(v,b,isPct)=>{const d=v-b;const hi=isPct?d>=15:d>=1;const lo=isPct?d<=-15:d<=-1;
+    const bg=hi?"rgba(226,75,74,.22)":lo?"rgba(99,153,34,.22)":"transparent";return `<td style="text-align:center;background:${bg};border-radius:3px">${v}${isPct?"%":""}</td>`;};
+  let h=tblOpen(print)+thRow(["Meals…","n","Nausea","Avg","Stomach","Dizzy","Stool","Greasy"],print);
+  groups.forEach(([l,a,isBase])=>{const s=stat(a);h+=`<tr style="border-top:.5px solid ${ln(print)}${isBase?";font-weight:600":""}"><td style="padding:3px 2px">${esc(l)}</td><td style="text-align:center">${s.n}</td>${isBase?`<td style="text-align:center">${s.nP}%</td><td style="text-align:center">${s.nA}</td><td style="text-align:center">${s.sP}%</td><td style="text-align:center">${s.dP}%</td><td style="text-align:center">${s.stP}%</td><td style="text-align:center">${s.gP}%</td>`:
+    cell(s.nP,base.nP,1)+cell(s.nA,base.nA,0)+cell(s.sP,base.sP,1)+cell(s.dP,base.dP,1)+cell(s.stP,base.stP,1)+cell(s.gP,base.gP,1)}</tr>`;});
+  return h+`</table><div style="font-size:11px;color:${mut};margin-top:4px">% of meals followed within ${WIN} h by each symptom; “Avg” = average highest nausea (0–10) in that window. Red = clearly more than all meals, green = clearly less. A meal can belong to several groups.</div>`;
+}
+
+/* ---------- medication ---------- */
+function medHTML(D,print){
+  const mut=print?"#777":"var(--muted)",allMed=mem.events.filter(e=>e.type==="med");
+  if(!allMed.length)return `<div class="hint" style="color:${mut}">No medication logged.</div>`;
+  const names=[...new Set(allMed.map(e=>e.extra&&e.extra.med||"?"))];
+  const first=firstDay();let h="";
+  names.forEach(nm=>{
+    const ev=allMed.filter(e=>(e.extra&&e.extra.med||"?")===nm).sort((a,b)=>a.ts<b.ts?-1:1);
+    const start=dayKey(ev[0].ts),inD=evIn(D,"med").filter(e=>(e.extra&&e.extra.med||"?")===nm),meals=evIn(D,"meal");
+    const doses=inD.reduce((s,e)=>s+(+e.value||0),0),wm=inD.filter(e=>(e.tags||[]).includes("with meal")).length;
+    const cov=meals.filter(m=>inD.some(x=>Math.abs(ts2h(x.ts)-ts2h(m.ts))<=0.75)).length;
+    h+=`<div style="font-size:${print?10:13}px;margin:2px 0 6px"><b>${esc(nm)}</b> · first logged ${nice(start+"T12:00")} · in this period: ${inD.length} entries, ${doses} doses, ${pct(wm,inD.length)}% marked “with meal”, ${meals.length?pct(cov,meals.length)+"% of meals covered":"no meals logged"}</div>`;
+    const before=[],after=[];let k=addDays(start,-30);const today=dayKey(new Date());
+    for(let i=0;i<60;i++){if(k>today)break;if(k>=first&&evDay(k).length){(k<start?before:after).push(daily(k));}k=addDays(k,1);}
+    if(before.length>=3&&after.length>=3){
+      const M=[["Nausea (max/day)",d=>d.nausea||0],["Dizziness",d=>d.dizzy||0],["Stomach",d=>d.stomach||0],["Stools/day",d=>d.stools],["Greasy/day",d=>d.greasy],["Wake-ups",d=>d.woke],["Day 1–5",d=>d.rating],["Sleep h",d=>d.sleep]];
+      h+=tblOpen(print)+thRow(["Before vs after start","Before ("+before.length+" d)","After ("+after.length+" d)"],print)+M.map(([l,f])=>{const a=r1(mean(before.map(f))),b=r1(mean(after.map(f)));return `<tr style="border-top:.5px solid ${ln(print)}"><td style="padding:2px">${l}</td><td style="text-align:center">${a??"–"}</td><td style="text-align:center">${b??"–"}</td></tr>`;}).join("")+`</table>`;
+      h+=`<div style="font-size:11px;color:${mut};margin:3px 0 8px">Up to 30 logged days before and after the first logged dose.</div>`;
+    }else h+=`<div style="font-size:11px;color:${mut};margin-bottom:8px">Before/after comparison needs at least 3 logged days on each side of the start (now ${before.length} before, ${after.length} after).${before.length<3?" It was probably started before logging began.":""}</div>`;
+  });
+  return h;
+}
+
+/* ---------- symptom details and timing ---------- */
+function detailsHTML(D,print){
+  const mut=print?"#777":"var(--muted)",fs=print?10:13;let h="";
+  const line=(title,arr,extra)=>{if(!arr.length)return "";const c={};arr.forEach(e=>(e.tags||[]).forEach(t=>c[t]=(c[t]||0)+1));
+    const parts=Object.keys(c).sort((a,b)=>c[b]-c[a]).map(t=>`${esc(t)} <b>${pct(c[t],arr.length)}%</b>`);
+    return `<div style="font-size:${fs}px;padding:4px 0;border-bottom:.5px solid ${ln(print)}"><b>${title}</b> <span style="color:${mut}">(${arr.length})</span>${extra?" · "+extra:""}${parts.length?"<br>"+parts.join(" · "):""}</div>`;};
+  const nau=evIn(D,"nausea"),meals=mem.events.filter(e=>e.type==="meal").map(e=>ts2h(e.ts)).sort((a,b)=>a-b);
+  let timing="";
+  if(nau.length){const b={"< 2 h after eating":0,"2–4 h":0,"4–8 h":0,"> 8 h / not eaten":0};
+    nau.forEach(e=>{const t=ts2h(e.ts);const prev=meals.filter(x=>x<=t).pop();const d=prev==null?99:t-prev;
+      b[d<2?"< 2 h after eating":d<4?"2–4 h":d<8?"4–8 h":"> 8 h / not eaten"]++;});
+    timing=`at night <b>${pct(nau.filter(e=>isNight(e.ts)).length,nau.length)}%</b><br><span style="color:${mut}">Time since last meal:</span> ${Object.entries(b).map(([k,v])=>`${k} <b>${pct(v,nau.length)}%</b>`).join(" · ")}`;}
+  h+=line("Nausea",nau,timing);
+  const st=evIn(D,"stool");
+  if(st.length){const c={};st.forEach(e=>c[e.value]=(c[e.value]||0)+1);h+=line("Stools",st,Object.keys(c).map(k=>`${esc(k)} <b>${pct(c[k],st.length)}%</b>`).join(" · "));}
+  h+=line("Dizziness",evIn(D,"dizzy"));h+=line("Stomach",evIn(D,"stomach"));
+  h+=line("Woke up",evIn(D,"woke"),(()=>{const w=evIn(D,"woke");if(!w.length)return "";const hs=w.map(e=>{const d=new Date(e.ts);let x=d.getHours()+d.getMinutes()/60;return x<12?x:x-24;});const m=mean(hs);const hh=(m+24)%24;return "typical time <b>"+pad(Math.floor(hh))+":"+pad(Math.round((hh%1)*60))+"</b>";})());
+  const bp=evIn(D,"bp");
+  if(bp.length){const g=t=>bp.filter(e=>(e.tags||[]).includes(t));const av=a=>Math.round(mean(a.map(e=>+e.extra.sys)))+"/"+Math.round(mean(a.map(e=>+e.extra.dia)));
+    const pu=mean(bp.map(e=>e.extra.pulse).filter(v=>v!==""&&v!=null).map(Number));
+    let ex=`avg <b>${av(bp)}</b>${pu!=null?" · pulse <b>"+Math.round(pu)+"</b>":""}`;
+    if(g("sitting").length&&g("standing").length)ex+=` · sitting <b>${av(g("sitting"))}</b> vs standing <b>${av(g("standing"))}</b>`;
+    if(g("feeling dizzy").length)ex+=` · when dizzy <b>${av(g("feeling dizzy"))}</b>`;
+    h+=line("Blood pressure",bp,ex);}
+  const notes=evIn(D,"note");h+=line("Notes",notes);
+  return h||`<div class="hint">No symptoms logged in this period.</div>`;
+}
+
+/* ---------- menstrual cycle ---------- */
+function cycleHTML(D,print){
+  const mut=print?"#777":"var(--muted)";
+  const per=new Set(mem.events.filter(e=>e.type==="endday"&&e.extra&&e.extra.period).map(e=>dayKey(e.ts)));
+  if(!per.size)return `<div class="hint" style="color:${mut}">Mark period days in “End of day” to see symptoms by cycle phase.</div>`;
+  const starts=[...per].filter(k=>!per.has(addDays(k,-1)));
+  const phase=k=>{if(per.has(k))return "During period";for(const s of starts){const d=Math.round((new Date(s+"T12:00")-new Date(k+"T12:00"))/864e5);if(d>=1&&d<=5)return "1–5 days before";}return "Other days";};
+  const L=loggedDays(D),G={};L.forEach(d=>{const p=phase(d.k);(G[p]=G[p]||[]).push(d);});
+  const order=["1–5 days before","During period","Other days"].filter(p=>G[p]&&G[p].length);
+  if(order.length<2)return `<div class="hint" style="color:${mut}">Not enough days in different cycle phases yet.</div>`;
+  const M=[["Nausea",d=>d.nausea||0],["Dizzy",d=>d.dizzy||0],["Stomach",d=>d.stomach||0],["Stools",d=>d.stools],["Wake-ups",d=>d.woke],["Day 1–5",d=>d.rating]];
+  return tblOpen(print)+thRow(["Phase","n",...M.map(m=>m[0])],print)+order.map(p=>`<tr style="border-top:.5px solid ${ln(print)}"><td style="padding:3px 2px">${p}</td><td style="text-align:center">${G[p].length}</td>${M.map(([,f])=>`<td style="text-align:center">${r1(mean(G[p].map(f)))??"–"}</td>`).join("")}</tr>`).join("")+`</table><div style="font-size:11px;color:${mut};margin-top:4px">Averages of daily values. Period starts found: ${starts.length}.</div>`;
+}
+
+/* ---------- comparisons ---------- */
+function compareHTML(D,print){
+  const act=loggedDays(D);
+  const A=(a,f)=>{const v=mean(a.map(f));return v==null?"–":r1(v);};
+  const sets=[["Period days",d=>d.period],["After sleep < 6 h",d=>d.sleep!=null&&d.sleep<6],["Stress 3–5",d=>d.stress!=null&&d.stress>=3],["Late meal (after 20:00)",d=>d.late>0]];
+  dynKeys(D,"food:").forEach(k=>sets.push(["With "+dynLabel(k).toLowerCase()+" food",d=>d[k]>0]));
+  dynKeys(D,"note:").forEach(k=>sets.push([dynLabel(k),d=>d[k]>0]));
+  sets.push(["Days with greasy stool",d=>d.greasy>0]);
+  const mut=print?"#777":"var(--muted)";
+  let h=tblOpen(print)+thRow(["Days…","n","Nausea","Dizzy","Stomach","Stools","Greasy"],print);let any=false;
+  for(const [l,f] of sets){const yes=act.filter(f),no=act.filter(d=>!f(d));if(yes.length<2||no.length<2)continue;any=true;
+    const row=(lab,a,b)=>`<tr${b?"":` style="border-top:.5px solid ${ln(print)}"`}><td style="text-align:left;padding:3px 0${b?";color:"+mut:""}">${lab}</td><td style="text-align:center">${a.length}</td>${["nausea","dizzy","stomach","stools","greasy"].map(k=>`<td style="text-align:center${b?";color:"+mut:""}">${A(a,d=>d[k]||0)}</td>`).join("")}</tr>`;
+    h+=row(esc(l),yes)+row("&nbsp;&nbsp;other days",no,true);}
+  h+=`</table>`;
+  return any?h+`<div style="font-size:11px;color:${mut};margin-top:4px">Averages of daily values. A difference hints at a pattern, it doesn’t prove a cause.</div>`:`<div class="hint">Not enough days logged yet for comparisons.</div>`;
+}
+
+/* ---------- combined chart ---------- */
+const SERIES=[
+  {k:"nausea",l:"Nausea",c:"#d85a30",on:true},{k:"dizzy",l:"Dizziness",c:"#7f77dd",on:true},{k:"stomach",l:"Stomach",c:"#d4537e",on:true},
+  {k:"rating2",l:"Day rating ×2",c:"#888780",on:false},{k:"sleep",l:"Sleep h",c:"#378add",on:false},{k:"stress2",l:"Stress ×2",c:"#ba7517",on:false}];
+let serOn=Object.fromEntries(SERIES.map(x=>[x.k,x.on]));
+function combinedSVG(D,print){
+  const W=340,H=190,pl=20,pr=4,pt=8,mid=128,bot=H-14,n=D.length,cw=(W-pl-pr)/n,mut="#8a929c";
+  const y=v=>pt+(mid-pt)*(1-Math.min(v,10)/10);
+  const smax=Math.max(3,...D.map(d=>Math.max(d.stools,d.woke)));
+  const yb=v=>bot-(bot-mid-12)*(v/smax);
+  let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block" xmlns="http://www.w3.org/2000/svg">`;
+  D.forEach((d,i)=>{if(d.period)s+=`<rect x="${pl+i*cw}" y="${pt}" width="${cw}" height="${bot-pt}" fill="rgba(212,83,126,.15)"/>`;});
+  [0,5,10].forEach(v=>s+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="${mut}" stroke-opacity=".3" stroke-width=".5"/><text x="${pl-3}" y="${y(v)+3}" font-size="8" text-anchor="end" fill="${mut}">${v}</text>`);
+  const typOf={nausea:"nausea",dizzy:"dizzy",stomach:"stomach"};
+  const anyT=t=>mem.events.some(e=>e.type===t&&dayKey(e.ts)>=D[0].k&&dayKey(e.ts)<=D[D.length-1].k);
+  for(const se of SERIES){if(!serOn[se.k])continue;if(typOf[se.k]&&!anyT(typOf[se.k]))continue;let pts=[];
+    D.forEach((d,i)=>{let v=se.k==="rating2"?(d.rating==null?null:d.rating*2):se.k==="stress2"?(d.stress==null?null:d.stress*2):d[se.k];
+      const has=evDay(d.k).length;if(v==null&&has&&["nausea","dizzy","stomach"].includes(se.k))v=0;
+      if(v!=null){const X=pl+i*cw+cw/2;pts.push(X+","+y(v));s+=`<circle cx="${X}" cy="${y(v)}" r="2" fill="${se.c}"/>`;}else{if(pts.length>1)s+=`<polyline points="${pts.join(" ")}" fill="none" stroke="${se.c}" stroke-width="1.6"/>`;pts=[];}});
+    if(pts.length>1)s+=`<polyline points="${pts.join(" ")}" fill="none" stroke="${se.c}" stroke-width="1.6"/>`;}
+  s+=`<text x="${pl}" y="${mid+9}" font-size="8" fill="${mut}">stools (brown, dark = greasy) · wake-ups (blue)</text>`;
+  D.forEach((d,i)=>{const x=pl+i*cw;const w=cw*.38;
+    if(d.stools)s+=`<rect x="${x+cw*.1}" y="${yb(d.stools)}" width="${w}" height="${bot-yb(d.stools)}" fill="#f0c987"/>`;
+    if(d.greasy)s+=`<rect x="${x+cw*.1}" y="${yb(d.greasy)}" width="${w}" height="${bot-yb(d.greasy)}" fill="#854f0b"/>`;
+    if(d.woke)s+=`<rect x="${x+cw*.52}" y="${yb(d.woke)}" width="${w}" height="${bot-yb(d.woke)}" fill="#378add"/>`;});
+  const step=Math.ceil(n/7);D.forEach((d,i)=>{if(i%step===0||(i===n-1&&(n-1)%step>=step/2)){const dt=new Date(d.k+"T12:00");s+=`<text x="${pl+i*cw+cw/2}" y="${H-3}" font-size="8" text-anchor="middle" fill="${mut}">${dt.getDate()}.${dt.getMonth()+1}.</text>`;}});
+  return s+"</svg>";
+}
+/* ---------- day x hour map ---------- */
+const MAPT=[["nausea","Nausea","#d85a30"],["dizzy","Dizziness","#7f77dd"],["stomach","Stomach","#d4537e"],["stool","Stool","#854f0b"],["woke","Woke up","#378add"],["meal","Meal","#0f6e56"],["med","Medication","#5dcaa5"]];
+function hourMapSVG(D,print){
+  const W=340,H=230,pl=30,pr=4,pt=6,pb=14,n=D.length,cw=(W-pl-pr)/n,mut="#8a929c";
+  const y=h=>pt+(H-pt-pb)*(h/24);
+  let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block" xmlns="http://www.w3.org/2000/svg">`;
+  D.forEach((d,i)=>{if(d.period)s+=`<rect x="${pl+i*cw}" y="${pt}" width="${cw}" height="${H-pt-pb}" fill="rgba(212,83,126,.15)"/>`;});
+  s+=`<rect x="${pl}" y="${y(0)}" width="${W-pl-pr}" height="${y(mem.nightTo)-y(0)}" fill="rgba(55,138,221,.08)"/><rect x="${pl}" y="${y(mem.nightFrom)}" width="${W-pl-pr}" height="${y(24)-y(mem.nightFrom)}" fill="rgba(55,138,221,.08)"/>`;
+  [0,6,12,18,24].forEach(h=>s+=`<line x1="${pl}" x2="${W-pr}" y1="${y(h)}" y2="${y(h)}" stroke="${mut}" stroke-opacity=".3" stroke-width=".5"/><text x="${pl-3}" y="${y(h)+3}" font-size="8" text-anchor="end" fill="${mut}">${pad(h)}:00</text>`);
+  const from=D[0].k,to=D[D.length-1].k,idx=Object.fromEntries(D.map((d,i)=>[d.k,i]));
+  const col=Object.fromEntries(MAPT.map(m=>[m[0],m[2]]));
+  mem.events.filter(e=>{const k=dayKey(e.ts);return k>=from&&k<=to&&col[e.type];}).forEach(e=>{
+    const dt=new Date(e.ts),i=idx[dayKey(e.ts)],off={nausea:.5,dizzy:.3,stomach:.7,stool:.5,woke:.5,meal:.5,med:.75}[e.type];
+    const X=pl+i*cw+cw*off,Y=y(dt.getHours()+dt.getMinutes()/60);
+    if(e.type==="meal")s+=`<rect x="${X-2}" y="${Y-2}" width="4" height="4" fill="${col.meal}" opacity=".7"/>`;
+    else if(e.type==="med")s+=`<path d="M${X-2.5} ${Y}h5" stroke="${col.med}" stroke-width="2"/>`;
+    else{const r=TYPES[e.type].slider?1.6+(+e.value||0)*0.35:2.4;s+=`<circle cx="${X}" cy="${Y}" r="${r}" fill="${col[e.type]}" fill-opacity=".8"/>`;}});
+  const step=Math.ceil(n/7);D.forEach((d,i)=>{if(i%step===0||(i===n-1&&(n-1)%step>=step/2)){const dt=new Date(d.k+"T12:00");s+=`<text x="${pl+i*cw+cw/2}" y="${H-3}" font-size="8" text-anchor="middle" fill="${mut}">${dt.getDate()}.${dt.getMonth()+1}.</text>`;}});
+  return s+"</svg>";
+}
+function legendHTML(items){return `<div style="display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;margin-top:4px">${items.map(([l,c,sh])=>`<span><span style="display:inline-block;width:9px;height:9px;border-radius:${sh==="sq"?"1px":"50%"};background:${c};margin-right:4px;vertical-align:-1px"></span>${l}</span>`).join("")}</div>`;}
+
+/* ---------- correlation analysis ---------- */
+const CORE=[["nausea","Nausea","Nau"],["nightN","Night nausea","NiN"],["vomited","Vomiting","Vom"],["dizzy","Dizziness","Diz"],["stomach","Stomach","Sto"],
+  ["stools","Stools","Stl"],["greasy","Greasy stools","Grs"],["watery","Watery stools","Wat"],["woke","Wake-ups","Wak"],["sleep","Sleep","Slp"],["rating","Day rating","Day"],
+  ["stress","Stress","Str"],["meals","Meals","Mls"],["late","Late meals","Lat"],["medN","Med doses","Med"],["sys","Blood pressure","BP"],["pulse","Pulse","Pul"],["period","Period","Per"]];
+function corrVars(D){
+  const v=[...CORE];
+  dynKeys(D,"food:").forEach(k=>v.push([k,dynLabel(k)+" food",dynLabel(k).slice(0,3)]));
+  dynKeys(D,"note:").forEach(k=>v.push([k,dynLabel(k),dynLabel(k).slice(0,3)]));
+  return v;
+}
+function corrVals(D){
+  const vars=corrVars(D);
+  return D.map((d,i)=>{if(!evDay(d.k).length)return null;const prev=i>0&&evDay(D[i-1].k).length?D[i-1]:null;
+    const r={};vars.forEach(([k])=>{
+      if(["sleep","rating","stress","sys","pulse"].includes(k))r[k]=d[k]==null?null:d[k];
+      else if(k==="period")r[k]=d.rating!=null||d.period?(d.period?1:0):null;
+      else r[k]=d[k]==null?0:(typeof d[k]==="boolean"?+d[k]:d[k]);
+      if(/^(food|note):/.test(k)||["late","stress","meals","greasy"].includes(k))r[k+"Y"]=prev?(prev[k]==null?(k==="stress"?null:0):prev[k]):null;});
+    return r;}).filter(Boolean);
+}
+function pearson(rows,a,b){const p=rows.filter(r=>r[a]!=null&&r[b]!=null);const n=p.length;if(n<5)return{r:null,n};
+  const ma=p.reduce((s,r)=>s+r[a],0)/n,mb=p.reduce((s,r)=>s+r[b],0)/n;let sab=0,saa=0,sbb=0;
+  p.forEach(r=>{const x=r[a]-ma,y=r[b]-mb;sab+=x*y;saa+=x*x;sbb+=y*y;});
+  if(!saa||!sbb)return{r:null,n};return{r:sab/Math.sqrt(saa*sbb),n};}
+function strength(r){const a=Math.abs(r);return a>=.5?"strong":a>=.3?"moderate":"weak";}
+function chance(r,n){const t=Math.abs(r)*Math.sqrt((n-2)/Math.max(1e-9,1-r*r));return t<2.1;}
+const TRIVIAL=new Set(["stools|greasy","stools|watery","greasy|watery","nausea|nightN","nausea|vomited","nightN|vomited","meals|late","sys|pulse"]);
+function corrFindings(rows,D){
+  const vars=corrVars(D),lab=Object.fromEntries(vars.map(v=>[v[0],v[1]])),pairs=[];
+  const expo=k=>/^(food|note|med):/.test(k)||["meals","late","medN"].includes(k);
+  const triv=(a,b)=>TRIVIAL.has(a+"|"+b)||TRIVIAL.has(b+"|"+a)||(expo(a)&&expo(b));
+  for(let i=0;i<vars.length;i++)for(let j=i+1;j<vars.length;j++){const a=vars[i][0],b=vars[j][0];if(triv(a,b))continue;const c=pearson(rows,a,b);if(c.r!=null)pairs.push({a:lab[a],b:lab[b],...c});}
+  const targets=["nausea","nightN","stomach","dizzy","stools","greasy","woke"];
+  vars.filter(([k])=>/^(food|note):/.test(k)||["late","stress","meals","greasy"].includes(k)).forEach(([k,l])=>targets.forEach(t=>{if(t===k)return;const c=pearson(rows,k+"Y",t);
+    if(c.r!=null)pairs.push({a:l+" yesterday",b:lab[t]+" today",...c,lag:true});}));
+  return pairs.filter(p=>Math.abs(p.r)>=.3&&p.n>=7).sort((x,y)=>(chance(x.r,x.n)-chance(y.r,y.n))||Math.abs(y.r)-Math.abs(x.r)).slice(0,12);
+}
+function findingText(f){return `More <b>${esc(f.a.toLowerCase())}</b> tends to go together with ${f.r>0?"more":"less"} <b>${esc(f.b.toLowerCase())}</b>`;}
+function corrMatrixHTML(rows,D,print){
+  const fg=print?"#000":"var(--text)",mut=print?"#777":"var(--muted)";
+  const vars=corrVars(D).filter(([k])=>{const v=rows.map(r=>r[k]).filter(x=>x!=null);return v.length>=5&&new Set(v).size>1;});
+  let h=`<table style="border-collapse:separate;border-spacing:1px;font-size:${print?8:10}px;color:${fg}"><tr><th></th>${vars.map(v=>`<th style="font-weight:500;color:${mut};padding:0 1px">${esc(v[2])}</th>`).join("")}</tr>`;
+  vars.forEach(([a,la],i)=>{h+=`<tr><td style="white-space:nowrap;padding-right:4px">${esc(la)}</td>`;
+    vars.forEach(([b],j)=>{if(j>=i){h+=`<td></td>`;return;}const c=pearson(rows,a,b);
+      if(c.r==null){h+=`<td style="text-align:center;color:${mut};min-width:22px">·</td>`;return;}
+      const r=c.r,al=Math.min(.85,Math.abs(r)),bg=r>0?`rgba(216,90,48,${al})`:`rgba(55,138,221,${al})`;
+      h+=`<td style="text-align:center;min-width:22px;height:20px;border-radius:3px;background:${bg};${Math.abs(r)>.5?"color:#fff;font-weight:600":""}">${(Math.round(r*10)/10).toFixed(1).replace("0.",".").replace("-0.","-.")}</td>`;});
+    h+=`</tr>`;});
+  return h+`</table>`;
+}
+function corrHTML(D,print){
+  const rows=corrVals(D),mut=print?"#777":"var(--muted)";
+  if(rows.length<7)return `<div class="hint" style="color:${mut}">Needs at least 7 logged days (now ${rows.length}). The more days, the more reliable.</div>`;
+  const F=corrFindings(rows,D);
+  let h=F.length?`<div style="font-size:${print?10:13}px">${F.map(f=>`<div style="padding:4px 0;border-bottom:.5px solid ${ln(print)}">${findingText(f)}<br><span style="font-size:11px;color:${mut}">${strength(f.r)} (r = ${f.r.toFixed(2)}, ${f.n} days)${chance(f.r,f.n)?" · could easily be chance":""}${f.lag?" · next-day effect":""}</span></div>`).join("")}</div>`:`<div class="hint">No clear relationships found yet (all |r| &lt; 0.3).</div>`;
+  h+=`<div style="margin-top:10px;overflow-x:auto">${corrMatrixHTML(rows,D,print)}</div>
+  <div style="font-size:11px;color:${mut};margin-top:4px">Red = rise together, blue = one up while the other goes down; stronger colour = stronger link. Based on ${rows.length} logged days. With many things compared, some links appear by chance; trust the ones that stay as more days are logged. A correlation shows what happens together, not what causes what.</div>`;
+  return h;
+}
+function corrReportHTML(D){const rows=corrVals(D);if(rows.length<7)return "";return `<h2>Correlation analysis</h2>${corrHTML(D,true)}`;}
+
+/* ---------- OVERVIEW ---------- */
+let ovDay=null,ovFrom=null,ovTo=null;
+let span=7,ovMode="charts",gMode="day";
+function renderOverview(){
+  $("#hTitle").textContent="Overview";$("#hSub").textContent="Pink background = period days";
+  if(ovMode==="diag")return renderDiag();
+  if(span===1)return renderOneDay();
+  const D=ovDays(),cs=getComputedStyle(document.documentElement),c=v=>cs.getPropertyValue(v).trim();
+  const ws=D.filter(d=>d.weight!=null);const wd=ws.length>1?Math.round((ws[ws.length-1].weight-ws[0].weight)*10)/10:null;
+  let h=ovSeg()+`${spanSeg()}
+  <div class="card"><div class="stats">
+   <div class="stat"><b>${avg(D.map(d=>d.nausea))}</b><span>avg max nausea</span></div>
+   <div class="stat"><b>${avg(D.map(d=>d.stools))}</b><span>stools / day</span></div>
+   <div class="stat"><b>${D.reduce((s,d)=>s+d.greasy,0)}</b><span>greasy / pale</span></div>
+   <div class="stat"><b>${avg(D.map(d=>d.woke))}</b><span>wake-ups / night</span></div>
+   <div class="stat"><b>${avg(D.map(d=>d.rating))}</b><span>avg day (1–5)</span></div>
+   <div class="stat"><b>${wd==null?"–":(wd>0?"+":"")+wd}</b><span>weight change kg</span></div></div></div>
+  <div class="card">
+   <div class="chartT">Nausea (daily max)<span>0–10</span></div>${chart(D,"nausea",{col:c("--c-nausea")})}
+   <div class="chartT">Dizziness (daily max)<span>0–10</span></div>${chart(D,"dizzy",{col:c("--c-dizzy")})}
+   <div class="chartT">Stomach (daily max)<span>0–10</span></div>${chart(D,"stomach",{col:c("--c-stomach")})}
+   <div class="chartT">Stools per day<span>dark = greasy / pale / floating</span></div>${chart(D,"stools",{type:"bar",max:Math.max(4,...D.map(d=>d.stools)),col:c("--c-stool-bg")||"#faeeda",sub:"greasy",subCol:c("--c-stool")})}
+   <div class="chartT">Night wake-ups<span>count</span></div>${chart(D,"woke",{type:"bar",max:Math.max(3,...D.map(d=>d.woke)),col:c("--c-sleep")})}
+   <div class="chartT">Weight<span>kg</span></div>${chart(D,"weight",{auto:true,connect:true,col:c("--c-gray")})}
+   <div class="chartT">Blood pressure<span>upper / lower, mmHg</span></div>${chart(D,"sys",{auto:true,connect:true,key2:"dia",col:c("--c-nausea"),col2:c("--c-sleep")})}
+   <div class="chartT">Overall day<span>1–5</span></div>${chart(D,"rating",{max:5,col:c("--accent")})}
+  </div>
+  <button class="primary" id="oReport">📄 Summary for the doctor</button>
+  <p class="hint">Covers the period selected above (choose “All” for everything recorded). Save it as PDF from the print / share menu.</p>`;
+  $("#main").innerHTML=h;
+  bindOv();
+  $("#oReport").onclick=()=>openReportFromOv();
+}
+
+function ovDays(){
+  const today=dayKey(new Date());
+  if(span===1)return keysRange(ovDay||today,ovDay||today);
+  if(span==="custom"){let a=ovFrom||addDays(today,-13),b=ovTo||today;if(a>b)[a,b]=[b,a];return keysRange(a,b);}
+  return range(spanDays(span));
+}
+function spanSeg(){
+  const today=dayKey(new Date());
+  const inp=(id,v)=>`<input type="date" id="${id}" value="${v}" max="${today}" style="flex:1;min-width:0;font-size:15px;padding:7px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text)">`;
+  let h=`<div class="seg" id="oSpan">${[[1,"Day"],[7,"7 days"],[30,"30 days"],["all","All"],["custom","Custom"]].map(([v,l])=>`<button class="chip${v===span?" on":""}" data-v="${v}" style="white-space:nowrap;padding:8px 4px;font-size:13px">${l}</button>`).join("")}</div>`;
+  if(span===1)h+=`<div class="time" style="margin-top:8px"><button id="oPrev">‹</button>${inp("oDay",ovDay||today)}<button id="oNext">›</button></div>`;
+  if(span==="custom")h+=`<div class="time" style="margin-top:8px"><span class="hint">From</span>${inp("oFrom",ovFrom||addDays(today,-13))}<span class="hint">to</span>${inp("oTo",ovTo||today)}</div>`;
+  return h;
+}
+function openReportFromOv(){
+  const today=dayKey(new Date());
+  if(!rep)rep={mode:"week",day:today,month:today.slice(0,7),from:addDays(today,-13),to:today};
+  if(span===1){rep.mode="day";rep.day=ovDay||today;}
+  else if(span===7){rep.mode="week";rep.day=today;}
+  else if(span==="all")rep.mode="all";
+  else{const D=ovDays();rep.mode="custom";rep.from=D[0].k;rep.to=D[D.length-1].k;}
+  openReport();
+}
+function dayHoursSVG(k,print){
+  const W=340,H=240,pl=24,pr=6,pt=8,mid=140,bot=H-14,mut="#8a929c",x=h=>pl+(W-pl-pr)*(h/24),y=v=>pt+(mid-pt)*(1-v/10);
+  const ev=evDay(k),hr=e=>{const d=new Date(e.ts);return d.getHours()+d.getMinutes()/60;};
+  let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block" xmlns="http://www.w3.org/2000/svg">`;
+  s+=`<rect x="${x(0)}" y="${pt}" width="${x(mem.nightTo)-x(0)}" height="${bot-pt}" fill="rgba(55,138,221,.08)"/><rect x="${x(mem.nightFrom)}" y="${pt}" width="${x(24)-x(mem.nightFrom)}" height="${bot-pt}" fill="rgba(55,138,221,.08)"/>`;
+  [0,5,10].forEach(v=>s+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="${mut}" stroke-opacity=".3" stroke-width=".5"/><text x="${pl-3}" y="${y(v)+3}" font-size="8" text-anchor="end" fill="${mut}">${v}</text>`);
+  [["nausea","#d85a30"],["dizzy","#7f77dd"],["stomach","#d4537e"]].forEach(([t,c])=>{const a=ev.filter(e=>e.type===t);
+    if(a.length>1)s+=`<polyline points="${a.map(e=>x(hr(e))+","+y(+e.value)).join(" ")}" fill="none" stroke="${c}" stroke-width="1.4" stroke-opacity=".6"/>`;
+    a.forEach(e=>s+=`<circle cx="${x(hr(e))}" cy="${y(+e.value)}" r="3.2" fill="${c}"/>`);});
+  const rows=[["stool","#854f0b","Stool"],["meal","#0f6e56","Meal"],["med","#5dcaa5","Med"],["woke","#378add","Woke"],["bp","#888780","BP"]];
+  rows.forEach(([t,c,l],i)=>{const yy=mid+10+i*((bot-mid-12)/rows.length)+3;s+=`<text x="${pl-3}" y="${yy+2.5}" font-size="8" text-anchor="end" fill="${mut}">${l}</text>`;
+    ev.filter(e=>e.type===t).forEach(e=>{const g=(e.tags||[]).some(g=>/greasy|pale|floating/.test(g));s+=`<circle cx="${x(hr(e))}" cy="${yy}" r="2.6" fill="${c}" ${t==="stool"&&!g?'fill-opacity=".45"':""}/>`;});});
+  [0,3,6,9,12,15,18,21,24].forEach(h=>s+=`<text x="${x(h)}" y="${H-3}" font-size="8" text-anchor="middle" fill="${mut}">${h}</text>`);
+  return s+"</svg>";
+}
+function renderOneDay(){
+  const k=ovDays()[0].k,ev=evDay(k),d=daily(k);
+  let h=ovSeg()+spanSeg();
+  h+=`<div class="card"><div class="chartT">${nice(k+"T12:00")}${d.period?" · period":""}<span>hour of day</span></div>${dayHoursSVG(k,false)}
+   ${legendHTML([["Nausea","#d85a30"],["Dizziness","#7f77dd"],["Stomach","#d4537e"]])}<div class="hint" style="margin-top:4px">Light blue = night hours. Dark stool dot = greasy / pale.</div></div>
+  <div class="card"><div class="stats">
+   <div class="stat"><b>${d.nausea??"–"}</b><span>max nausea</span></div><div class="stat"><b>${d.dizzy??"–"}</b><span>max dizziness</span></div><div class="stat"><b>${d.stools}${d.greasy?" ("+d.greasy+")":""}</b><span>stools (greasy)</span></div>
+   <div class="stat"><b>${d.woke}</b><span>wake-ups</span></div><div class="stat"><b>${d.sleep??"–"}</b><span>sleep h</span></div><div class="stat"><b>${d.rating??"–"}</b><span>day 1–5</span></div></div></div>
+  <div class="card">${ev.length?ev.map(e=>`<div class="ev" data-id="${e.id}"><span class="t">${hm(e.ts)}</span><span class="dot" style="background:${dotCol(e)}"></span><span class="x">${describe(e)}</span></div>`).join(""):'<div class="empty">Nothing logged on this day.</div>'}</div>
+  <button class="primary" id="oReport">📄 Summary for the doctor</button>`;
+  $("#main").innerHTML=h;bindOv();
+  $("#main").querySelectorAll(".ev").forEach(r=>r.onclick=()=>{const e=mem.events.find(x=>x.id===r.dataset.id);if(e)openSheet(e.type,e);});
+  $("#oReport").onclick=()=>openReportFromOv();
+}
+function ovSeg(){return `<div class="seg" id="oMode" style="margin-bottom:8px"><button class="chip${ovMode==="charts"?" on":""}" data-v="charts">Charts</button><button class="chip${ovMode==="diag"?" on":""}" data-v="diag">Diagnostic</button></div>`;}
+function bindOv(){
+  $("#oMode").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{ovMode=b.dataset.v;renderOverview();});
+  $("#oSpan").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{const v=b.dataset.v;span=(v==="all"||v==="custom")?v:+v;renderOverview();});
+  const today=dayKey(new Date());
+  if($("#oDay")){$("#oDay").onchange=e=>{if(e.target.value){ovDay=e.target.value;renderOverview();}};
+    $("#oPrev").onclick=()=>{ovDay=addDays(ovDay||today,-1);renderOverview();};
+    $("#oNext").onclick=()=>{const n=addDays(ovDay||today,1);if(n<=today){ovDay=n;renderOverview();}};}
+  if($("#oFrom")){$("#oFrom").onchange=e=>{if(e.target.value){ovFrom=e.target.value;renderOverview();}};$("#oTo").onchange=e=>{if(e.target.value){ovTo=e.target.value;renderOverview();}};}
+}
+let diagOpen={};
+function sec(id,title,sub,body,def){const o=diagOpen[id]!==undefined?diagOpen[id]:def!==false;return `<details class="card" data-s="${id}"${o?" open":""}><summary>${title}<span>${sub||""}</span></summary>${body}</details>`;}
+function renderDiag(){
+  $("#hSub").textContent="All parameters together · green = good, red = bad";
+  const D=ovDays(),cols=gMode==="week"?toWeeks(D):D;
+  let h=ovSeg()+spanSeg();
+  h+=sec("facts","Key facts",nice(D[0].k+"T12:00")+(D.length>1?" – "+nice(D[D.length-1].k+"T12:00"):""),keyFactsHTML(D,false));
+  h+=sec("comb","Combined chart","0–10 · pink = period",`<div class="chips" id="serT" style="gap:5px;margin:4px 0">${SERIES.map(x=>`<button class="chip${serOn[x.k]?" on":""}" data-v="${x.k}" style="padding:4px 9px;font-size:12px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${x.c};margin-right:4px"></span>${x.l}</button>`).join("")}</div>${combinedSVG(D,false)}`);
+  h+=sec("map","When it happens","day × hour",`${hourMapSVG(D,false)}${legendHTML(MAPT.map(m=>[m[1],m[2],m[0]==="meal"?"sq":""]))}<div class="hint" style="margin-top:4px">Bigger dot = more intense. Light blue band = night hours.</div>`);
+  h+=sec("grid","All parameters",gMode==="week"?"per week":"per day",`<div class="seg" id="gMode" style="margin-bottom:6px"><button class="chip${gMode==="day"?" on":""}" data-v="day" style="padding:4px 10px">Days</button><button class="chip${gMode==="week"?" on":""}" data-v="week" style="padding:4px 10px">Weeks</button></div>
+   <div id="gWrap" style="overflow-x:auto">${gridHTML(cols,gMode,false,D)}</div>
+   <div class="hint" style="margin-top:6px">Symptoms: green = good, red = bad (daily maximum 0–10; sleep and day rating: less = redder). Food, medication and notes in blue = how many times. ${gMode==="day"?"Tap a date to open that day.":"Weeks start on Monday, values are averages per logged day; “d” = days with entries."}</div>`);
+  h+=sec("meal","After meals","symptoms within 4 h",afterMealHTML(D,false));
+  h+=sec("med","Medication","coverage · before vs after",medHTML(D,false));
+  h+=sec("det","Symptom details","how often each detail was ticked",detailsHTML(D,false));
+  h+=sec("tod","Time of day","number of entries",todHTML(D,false));
+  h+=sec("cyc","Menstrual cycle","by phase",cycleHTML(D,false));
+  h+=sec("corr","Correlation analysis","what goes together",corrHTML(D,false));
+  h+=sec("cmp","Comparisons","average daily values",compareHTML(D,false));
+  h+=`<button class="primary" id="oReport">📄 Summary for the doctor</button>`;
+  $("#main").innerHTML=h;bindOv();
+  $("#main").querySelectorAll("details[data-s]").forEach(d=>d.addEventListener("toggle",()=>{diagOpen[d.dataset.s]=d.open;}));
+  $("#gMode").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{gMode=b.dataset.v;renderDiag();});
+  $("#serT").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{serOn[b.dataset.v]=!serOn[b.dataset.v];renderDiag();});
+  const w=$("#gWrap");w.scrollLeft=w.scrollWidth;
+  if(gMode==="day")w.querySelectorAll("th[data-k]").forEach(th=>th.onclick=()=>{viewDay=th.dataset.k;dayMode="day";tab="day";document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x.dataset.tab==="day"));render();window.scrollTo(0,0);});
+  $("#oReport").onclick=()=>openReportFromOv();
+}
+
+/* ---------- DOCTOR REPORT ---------- */
+function keysRange(from,to){const out=[];let k=from;let guard=0;while(k<=to&&guard++<4000){out.push(daily(k));k=addDays(k,1);}return out;}
+function reportHTML(from,to,full){
+  let D=keysRange(from,to),n=D.length;const P="#d85a30";
+  const logged=D.filter(d=>evDay(d.k).length).length;
+  const meds={};mem.events.filter(e=>e.type==="med"&&dayKey(e.ts)>=from).forEach(e=>{const m=e.extra&&e.extra.med||"?";meds[m]=meds[m]||{n:0,wm:0};meds[m].n++;if((e.tags||[]).includes("with meal"))meds[m].wm++;});
+  const ws=D.filter(d=>d.weight!=null);
+  const alarms=mem.events.filter(e=>e.type==="alarm"&&dayKey(e.ts)>=from);
+  let h=`<h1>Symptom log summary</h1><div>${nice(from+"T12:00")} – ${nice(to+"T12:00")} ${new Date(to).getFullYear()} · ${n} day${n===1?"":"s"}, ${logged} with entries</div>
+  <h2>Key figures</h2><table><tr><th>Avg daily max nausea</th><th>Days with nausea</th><th>Night nausea episodes</th><th>Avg stools/day</th><th>Greasy/pale stools</th><th>Watery stools</th><th>Avg wake-ups</th><th>Avg sleep h</th><th>Avg day 1–5</th><th>Avg BP</th><th>Weight</th></tr>
+  <tr><td>${avg(D.map(d=>d.nausea))}</td><td>${D.filter(d=>d.nausea).length}</td><td>${D.reduce((s,d)=>s+d.nightN,0)}</td><td>${avg(D.map(d=>d.stools))}</td><td>${D.reduce((s,d)=>s+d.greasy,0)}</td><td>${D.reduce((s,d)=>s+d.watery,0)}</td><td>${avg(D.map(d=>d.woke))}</td><td>${avg(D.map(d=>d.sleep))}</td><td>${avg(D.map(d=>d.rating))}</td><td>${(()=>{const a=avg(D.map(d=>d.sys)),b=avg(D.map(d=>d.dia));return a==="–"?"–":Math.round(a)+"/"+Math.round(b);})()}</td>
+  <td>${ws.length?ws[0].weight+" → "+ws[ws.length-1].weight+" kg":"–"}</td></tr></table>
+  <h2>Key facts</h2>${keyFactsHTML(D,true)}
+  ${mem.events.some(e=>e.type==="med")?`<h2>Medication</h2>${medHTML(D,true)}`:""}
+  ${alarms.length?`<h2 style="color:#b00020">Warning signs logged</h2><div>${alarms.map(a=>nice(a.ts)+" "+hm(a.ts)+": "+esc((a.tags||[]).join(", "))+(a.note?" – "+esc(a.note):"")).join("<br>")}</div>`:""}
+  ${D.length<2?"":`<h2>All parameters ${D.length>31?"per week":"per day"} (green = good, red = bad)</h2>`}${D.length<2?"":""}${D.length<2?"":gridHTML(D.length>31?toWeeks(D):D,D.length>31?"week":"day",true,D)}
+  <h2>After meals (symptoms within 4 h)</h2>${afterMealHTML(D,true)}
+  <h2>Symptom details</h2>${detailsHTML(D,true)}
+  ${D.length<3?"":`<div class="grid2"><div><h2>Combined chart (0–10)</h2>${combinedSVG(D,true)}${legendHTML(SERIES.filter(x=>serOn[x.k]).map(x=>[x.l,x.c]))}</div><div><h2>When it happens (day × hour)</h2>${hourMapSVG(D,true)}${legendHTML(MAPT.map(m=>[m[1],m[2],m[0]==="meal"?"sq":""]))}</div></div>`}
+  <div class="grid2"><div><h2>Time of day (number of entries)</h2>${todHTML(D,true)}</div><div><h2>Menstrual cycle</h2>${cycleHTML(D,true)}</div></div>
+  <h2>Comparisons</h2>${compareHTML(D,true)}
+  ${corrReportHTML(D)}
+  ${D.length<3?"":`<h2>Trends (pink = period days)</h2><div class="grid2">
+   <div><b>Nausea (max/day)</b>${chart(D,"nausea",{col:P})}</div><div><b>Dizziness (max/day)</b>${chart(D,"dizzy",{col:"#534ab7"})}</div>
+   <div><b>Stools/day (dark = greasy/pale)</b>${chart(D,"stools",{type:"bar",max:Math.max(4,...D.map(d=>d.stools)),col:"#f0c987",sub:"greasy",subCol:"#854f0b"})}</div>
+   <div><b>Weight (kg)</b>${chart(D,"weight",{auto:true,connect:true,col:"#444"})}</div>
+   <div><b>Stomach (max/day)</b>${chart(D,"stomach",{col:"#993556"})}</div><div><b>Night wake-ups</b>${chart(D,"woke",{type:"bar",max:Math.max(3,...D.map(d=>d.woke)),col:"#185fa5"})}</div>
+   ${D.some(d=>d.sys!=null)?`<div><b>Blood pressure (upper / lower)</b>${chart(D,"sys",{auto:true,connect:true,key2:"dia",col:"#d85a30",col2:"#185fa5"})}</div>`:""}</div>`}
+  <h2>Day by day</h2><table><tr><th>Date</th><th>Nausea</th><th>Night<br>nausea</th><th>Dizzy</th><th>Stomach</th><th>Stools<br>(greasy)</th><th>Wake-<br>ups</th><th>Meals<br>(fatty)</th><th>Meds<br>(w/ meal)</th><th>Sleep</th><th>Day<br>1–5</th><th>BP</th><th>Kg</th><th class="l">Notes</th></tr>`;
+  for(const d of D){const dt=new Date(d.k+"T12:00");const f=v=>v==null?"":v;
+    h+=`<tr class="${d.period?"pd":""}"><td>${DOW[dt.getDay()]} ${dt.getDate()}.${dt.getMonth()+1}.</td><td>${f(d.nausea)}</td><td>${d.nightN||""}</td><td>${f(d.dizzy)}</td><td>${f(d.stomach)}</td><td>${d.stools?d.stools+(d.greasy?" ("+d.greasy+")":""):""}</td><td>${d.woke||""}</td><td>${d.meals?d.meals+(d.fatty?" ("+d.fatty+")":""):""}</td><td>${d.medN?d.medN+" ("+d.medsWithMeal+")":""}</td><td>${f(d.sleep)}</td><td>${f(d.rating)}</td><td>${esc(d.bpTxt)}</td><td>${f(d.weight)}</td><td class="l">${esc(d.notes)}${d.alarm?" <b style='color:#b00020'>⚠</b>":""}</td></tr>`;}
+  h+=`</table>`;
+  if(full||n===1){const ev=mem.events.filter(e=>{const k=dayKey(e.ts);return k>=from&&k<=to;}).sort((a,b)=>a.ts<b.ts?-1:1);
+    h+=`<h2>All entries (${ev.length})</h2><table><tr><th>Date</th><th>Time</th><th class="l">Entry</th></tr>`;
+    for(const e of ev){const dt=new Date(e.ts);h+=`<tr><td>${dt.getDate()}.${dt.getMonth()+1}.</td><td>${hm(e.ts)}</td><td class="l">${describe(e).replace(/<br>/g," · ")}</td></tr>`;}
+    h+=`</table>`;}
+  h+=`<p style="color:#666;margin-top:8px">Scales 0–10 (0 = none, 10 = worst). Pink rows = period. “Night” = ${mem.nightFrom}:00–${mem.nightTo}:00. Self-recorded with Symptom Log.</p>`;
+  return h;
+}
+let repFull=true,rep=null;
+function repRange(){
+  const today=dayKey(new Date());
+  switch(rep.mode){
+    case "day":return[rep.day,rep.day];
+    case "week":return[addDays(rep.day,-6),rep.day];
+    case "month":{const [y,m]=rep.month.split("-").map(Number);const last=new Date(y,m,0).getDate();const to=rep.month+"-"+pad(last);return[rep.month+"-01",to>today?today:to];}
+    case "all":return[firstDay(),today];
+    default:{let a=rep.from||today,b=rep.to||today;if(a>b)[a,b]=[b,a];return[a,b];}
+  }
+}
+function openReport(sp){
+  const today=dayKey(new Date());
+  if(!rep)rep={mode:"week",day:today,month:today.slice(0,7),from:addDays(today,-13),to:today};
+  if(sp!==undefined){rep.mode=sp==="all"?"all":sp<=1?"day":sp<=7?"week":"custom";if(rep.mode==="custom"){rep.from=addDays(today,-(sp-1));rep.to=today;}}
+  const [from,to]=repRange();
+  const html=reportHTML(from,to,repFull);$("#report").innerHTML=html;
+  const rv=$("#reportView");
+  const inp=(id,type,val)=>`<input id="${id}" type="${type}" value="${val}" style="font-size:14px;padding:6px;border:1px solid #ccd;border-radius:8px">`;
+  const ctl=rep.mode==="day"||rep.mode==="week"?(rep.mode==="week"?"Ending ":"")+inp("rDay","date",rep.day):rep.mode==="month"?inp("rMonth","month",rep.month):rep.mode==="custom"?"From "+inp("rFrom","date",rep.from)+" to "+inp("rTo","date",rep.to):"";
+  rv.innerHTML=`<div class="bar" style="flex-direction:column;gap:8px">
+   <div style="display:flex;gap:6px;flex-wrap:wrap" id="rMode">${[["day","1 day"],["week","7 days"],["month","Month"],["all","All"],["custom","Custom"]].map(([v,l])=>`<button data-v="${v}" style="border:1px solid ${rep.mode===v?"#1f3a5f":"#ccd"};background:${rep.mode===v?"#e6edf6":"#fff"};color:#1f3a5f;border-radius:16px;padding:6px 12px;font-size:13px;font-weight:${rep.mode===v?700:400}">${l}</button>`).join("")}</div>
+   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px">${ctl}</div>
+   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="primary" style="width:auto;padding:10px 16px" id="rPrint">Print / Save PDF</button><button class="ghost" style="color:#000;background:#fff" id="rClose">Close</button><label style="font-size:13px"><input type="checkbox" id="rFull"${repFull?" checked":""}> include every entry</label></div></div><div style="font-size:12px">${html}</div>`;
+  $("#rFull").onchange=ev=>{repFull=ev.target.checked;openReport();};
+  rv.querySelectorAll("#rMode button").forEach(b=>b.onclick=()=>{rep.mode=b.dataset.v;openReport();});
+  const on=(id,f)=>{const x=$(id);if(x)x.onchange=()=>{if(x.value){f(x.value);openReport();}};};
+  on("#rDay",v=>rep.day=v);on("#rMonth",v=>rep.month=v);on("#rFrom",v=>rep.from=v);on("#rTo",v=>rep.to=v);
+  rv.querySelectorAll("table").forEach(t=>{t.style.borderCollapse="collapse";t.style.width="100%";t.style.fontSize="11px";});
+  rv.querySelectorAll("th,td").forEach(c=>{c.style.border="1px solid #ccd";c.style.padding="2px 4px";});
+  rv.querySelectorAll("th").forEach(c=>{c.style.background="#1f3a5f";c.style.color="#fff";});
+  rv.querySelectorAll("td.l").forEach(c=>c.style.textAlign="left");
+  rv.querySelectorAll("tr.pd").forEach(c=>c.style.background="#fbe3ec");
+  rv.querySelectorAll(".grid2").forEach(c=>{c.style.display="grid";c.style.gridTemplateColumns="1fr 1fr";c.style.gap="6px 14px";});
+  rv.querySelectorAll("td[data-bg]").forEach(c=>c.style.background=c.dataset.bg);
+  rv.classList.add("open");
+  $("#rPrint").onclick=()=>window.print();$("#rClose").onclick=()=>rv.classList.remove("open");
+}
+
+/* ---------- SETTINGS ---------- */
+function renderSettings(){
+  $("#hTitle").textContent="Settings";$("#hSub").textContent=mem.events.length+" entries stored on this device only";
+  let h=`<div class="card"><b>Medications</b><div class="hint">Shown as buttons in the Medication form.</div><div id="sMeds">`+
+   mem.meds.map((m,i)=>`<div class="medrow"><input class="num" data-i="${i}" value="${esc(m)}"><button data-del="${i}" aria-label="Remove">✕</button></div>`).join("")+
+   `</div><div class="medrow"><input class="num" id="sNew" placeholder="Add medication, e.g. Paracetamol"><button id="sAdd" style="color:var(--accent)" aria-label="Add">＋</button></div></div>
+  <div class="card"><b>Display</b><div class="hint">Dark mode for evenings and night.</div>
+   <div class="seg" id="sTheme" style="margin-top:8px">${[["time","Auto 18–7"],["system","Phone"],["light","Light"],["dark","Dark"]].map(([v,l])=>`<button class="chip${mem.theme===v?" on":""}" data-v="${v}">${l}</button>`).join("")}</div></div>
+  <div class="card"><b>Night hours (for symptoms)</b><div class="hint">Nausea etc. logged in this window counts as “at night” in reports.</div>
+   <div class="row2" style="margin-top:8px"><label>From <select id="sNf">${[...Array(24).keys()].map(x=>`<option${x===mem.nightFrom?" selected":""}>${x}</option>`).join("")}</select></label>
+   <label>To <select id="sNt">${[...Array(24).keys()].map(x=>`<option${x===mem.nightTo?" selected":""}>${x}</option>`).join("")}</select></label></div></div>
+  <div class="card"><b>Details (chips)</b><div class="hint">Most-used details are shown first. Tap ✕ to remove one you don't need. New ones can be added with “+ new” in any form.</div><div id="sTags"></div>
+   <button class="ghost" id="sTagReset" style="margin-top:8px">Show removed details again</button></div>
+  <div class="card"><b>Backup to Google Drive or a folder</b><div class="hint">Everything stays on this phone until you back it up. “Back up now” opens the share menu: choose <b>Drive</b> (pick a folder) or <b>Save to Files</b>. ${mem.lastBackup?"Last backup: "+nice(mem.lastBackup)+".":"No backup yet."}</div>
+   <button class="primary" id="sShare" style="margin-top:10px">Back up now</button>
+   <div class="row2" style="margin-top:10px"><button class="ghost" id="sCsv">Download CSV</button><button class="ghost" id="sJson">Download backup</button></div>
+   <div class="row2" style="margin-top:10px"><button class="ghost" id="sImp">Restore backup</button><button class="danger" id="sClr">Delete all</button></div>
+   <input type="file" id="sFile" accept=".json,application/json" style="display:none"></div>
+  <p class="hint">Symptom Log · offline web app. Not a medical device. Warning signs (black or bloody stool, fever, severe pain, fainting) need a doctor.</p>`;
+  $("#main").innerHTML=h;
+  $("#sMeds").querySelectorAll("input").forEach(inp=>inp.onchange=()=>{const v=inp.value.trim();if(v){mem.meds[+inp.dataset.i]=v;save();}else renderSettings();});
+  $("#sMeds").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{mem.meds.splice(+b.dataset.del,1);save();renderSettings();});
+  const add=()=>{const v=$("#sNew").value.trim();if(v&&!mem.meds.includes(v)){mem.meds.push(v);save();renderSettings();}};
+  $("#sAdd").onclick=add;$("#sNew").onkeydown=e=>{if(e.key==="Enter")add();};
+  $("#sNf").onchange=e=>{mem.nightFrom=+e.target.value;save();};$("#sNt").onchange=e=>{mem.nightTo=+e.target.value;save();};
+  $("#sCsv").onclick=()=>download("symptom-log-"+dayKey(new Date())+".csv",csvText(),"text/csv");
+  $("#sShare").onclick=backupShare;
+  $("#sTheme").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{mem.theme=b.dataset.v;save();applyTheme();renderSettings();});
+  const st=$("#sTags");st.innerHTML=Object.keys(TYPES).filter(t=>TYPES[t].tags&&!TYPES[t].hidden).map(t=>`<div class="lbl">${TYPES[t].ico} ${TYPES[t].name}</div><div class="chips">${tagsFor(t).map(g=>`<button class="chip" data-t="${t}" data-v="${esc(g)}">${esc(g)} ✕</button>`).join("")||'<span class="hint">none</span>'}</div>`).join("");
+  st.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{const t=c.dataset.t,v=c.dataset.v;
+    if((mem.customTags[t]||[]).includes(v))mem.customTags[t]=mem.customTags[t].filter(x=>x!==v);
+    if((TYPES[t].tags||[]).includes(v)){mem.hiddenTags[t]=mem.hiddenTags[t]||[];if(!mem.hiddenTags[t].includes(v))mem.hiddenTags[t].push(v);}
+    save();renderSettings();});
+  $("#sTagReset").onclick=()=>{mem.hiddenTags={};save();renderSettings();};
+  $("#sJson").onclick=()=>{mem.lastBackup=new Date().toISOString();save();download("symptom-log-backup-"+dayKey(new Date())+".json",JSON.stringify(mem,null,1),"application/json");};
+  $("#sImp").onclick=()=>$("#sFile").click();
+  $("#sFile").onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.events))throw new Error("not a Symptom Log backup");
+      const ids=new Set(mem.events.map(e=>e.id));let n=0;d.events.forEach(e=>{if(!ids.has(e.id)){mem.events.push(e);n++;}});(d.meds||[]).forEach(m=>{if(!mem.meds.includes(m))mem.meds.push(m);});
+      Object.entries(d.customTags||{}).forEach(([t,a])=>{mem.customTags[t]=[...new Set([...(mem.customTags[t]||[]),...a])];});save();alert(n+" entries restored.");renderSettings();}catch(e){alert("Could not read the file: "+e.message);}};r.readAsText(f);};
+  $("#sClr").onclick=()=>{if(confirm("Delete ALL entries from this phone? This can't be undone.")&&confirm("Really delete everything?")){mem.events=[];save();renderSettings();}};
+}
+function csvText(){
+  const q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
+  const rows=[["date","time","type","value","medication","systolic","diastolic","pulse","tags","note","rating","sleep_h","stress","period"].join(",")];
+  [...mem.events].sort((a,b)=>a.ts<b.ts?-1:1).forEach(e=>{const x=e.extra||{};rows.push([dayKey(e.ts),hm(e.ts),e.type,e.type==="bp"?"":e.value,x.med,x.sys,x.dia,x.pulse,(e.tags||[]).join("; "),e.note,x.rating,x.sleep,x.stress,x.period==null?"":(x.period?1:0)].map(q).join(","));});
+  return "\ufeff"+rows.join("\r\n");
+}
+async function backupShare(){
+  const d=dayKey(new Date());
+  const fj=new File([JSON.stringify(mem,null,1)],"symptom-log-backup-"+d+".json",{type:"application/json"});
+  const fc=new File([csvText()],"symptom-log-"+d+".csv",{type:"text/csv"});
+  try{
+    if(navigator.canShare&&navigator.canShare({files:[fj,fc]})){await navigator.share({files:[fj,fc],title:"Symptom Log backup"});}
+    else if(navigator.canShare&&navigator.canShare({files:[fj]})){await navigator.share({files:[fj],title:"Symptom Log backup"});}
+    else{download(fj.name,await fj.text(),"application/json");}
+    mem.lastBackup=new Date().toISOString();save();render();
+  }catch(e){if(e&&e.name!=="AbortError")alert("Backup failed: "+e.message);}
+}
+function download(name,data,type){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
+
+render();
+if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
