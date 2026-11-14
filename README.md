@@ -43,7 +43,7 @@ The **Overview** tab has two views, each for a single day (with an hour-by-hour 
 
 ## Install on the phone
 
-- **Android (Chrome):** open the link, then use the ⋮ menu → *Add to Home screen* / *Install app*.
+- **Android:** use **Chrome** (or Edge / Samsung Internet). Open the link, then use ⋮ → **Install app**, or the *Install* button inside the app. DuckDuckGo and Firefox only create a shortcut, which won't show in the app list.
 - **iPhone (Safari):** open the link, then use Share → *Add to Home Screen*.
 
 After the first visit it also works offline.

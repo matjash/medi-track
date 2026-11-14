@@ -237,6 +237,7 @@ function renderLog(){
   const mx=t=>{const a=n(t).map(e=>+e.value);return a.length?Math.max(...a):"–";};
   $("#hSub").textContent=nice(new Date())+(periodOn(k)?" · period":"");
   let h="";
+  if(installEvt&&!isStandalone())h+=`<div class="card" style="font-size:14px;display:flex;gap:10px;align-items:center"><span style="flex:1">Install Symptom Log as an app on this phone.</span><button class="ghost" id="lInst">Install</button></div>`;
   const bd=mem.lastBackup?Math.floor((Date.now()-new Date(mem.lastBackup))/864e5):null;
   if(mem.events.length>=15&&(bd==null||bd>=7))h+=`<div class="card" style="font-size:14px;display:flex;gap:10px;align-items:center"><span style="flex:1">${bd==null?"No backup yet.":"Last backup "+bd+" days ago."} Save a copy to Google Drive or a folder.</span><button class="ghost" id="lBk">Back up</button></div>`;
   h+=`<div class="today">Today: ${n("stool").length} stools · nausea max ${mx("nausea")} · dizziness max ${mx("dizzy")} · ${n("woke").length} wake-ups</div><div class="grid">`;
@@ -248,6 +249,7 @@ function renderLog(){
   $("#main").innerHTML=h;
   $("#main").querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{const t=b.dataset.t;if(TYPES[t].quick)quickLog(t);else openSheet(t);});
   if($("#lBk"))$("#lBk").onclick=backupShare;
+  if($("#lInst"))$("#lInst").onclick=doInstall;
 }
 let lastQuick=null,toastT;
 function quickLog(t){
@@ -977,6 +979,7 @@ function renderSettings(){
   let h=`<div class="card"><b>Medications</b><div class="hint">Shown as buttons in the Medication form.</div><div id="sMeds">`+
    mem.meds.map((m,i)=>`<div class="medrow"><input class="num" data-i="${i}" value="${esc(m)}"><button data-del="${i}" aria-label="Remove">✕</button></div>`).join("")+
    `</div><div class="medrow"><input class="num" id="sNew" placeholder="Add medication, e.g. Paracetamol"><button id="sAdd" style="color:var(--accent)" aria-label="Add">＋</button></div></div>
+  ${isStandalone()?"":`<div class="card"><b>Install as app</b><div class="hint">Puts Symptom Log in the app list, opens full screen and works offline.</div><button class="ghost" id="sInst" style="margin-top:8px;width:100%">Install app</button></div>`}
   <div class="card"><b>Display</b><div class="hint">Dark mode for evenings and night.</div>
    <div class="seg" id="sTheme" style="margin-top:8px">${[["time","Auto 18–7"],["system","Phone"],["light","Light"],["dark","Dark"]].map(([v,l])=>`<button class="chip${mem.theme===v?" on":""}" data-v="${v}">${l}</button>`).join("")}</div></div>
   <div class="card"><b>Night hours (for symptoms)</b><div class="hint">Nausea etc. logged in this window counts as “at night” in reports.</div>
@@ -998,6 +1001,7 @@ function renderSettings(){
   $("#sNf").onchange=e=>{mem.nightFrom=+e.target.value;save();};$("#sNt").onchange=e=>{mem.nightTo=+e.target.value;save();};
   $("#sCsv").onclick=()=>download("symptom-log-"+dayKey(new Date())+".csv",csvText(),"text/csv");
   $("#sShare").onclick=backupShare;
+  if($("#sInst"))$("#sInst").onclick=doInstall;
   $("#sTheme").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{mem.theme=b.dataset.v;save();applyTheme();renderSettings();});
   const st=$("#sTags");st.innerHTML=Object.keys(TYPES).filter(t=>TYPES[t].tags&&!TYPES[t].hidden).map(t=>`<div class="lbl">${TYPES[t].ico} ${TYPES[t].name}</div><div class="chips">${tagsFor(t).map(g=>`<button class="chip" data-t="${t}" data-v="${esc(g)}">${esc(g)} ✕</button>`).join("")||'<span class="hint">none</span>'}</div>`).join("");
   st.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{const t=c.dataset.t,v=c.dataset.v;
@@ -1033,6 +1037,16 @@ function download(name,data,type){const a=document.createElement("a");a.href=URL
 
 render();
 if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(()=>{});
+/* ---------- install as app ---------- */
+var installEvt=null;
+function isStandalone(){return window.matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;}
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;if(tab==="log"||tab==="settings")render();});
+window.addEventListener("appinstalled",()=>{installEvt=null;render();});
+async function doInstall(){
+  if(installEvt){installEvt.prompt();const r=await installEvt.userChoice;installEvt=null;render();return;}
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  alert(ios?"On iPhone: open this page in Safari, tap Share, then “Add to Home Screen”.":"Installing as a real app works in Chrome, Edge or Samsung Internet (not DuckDuckGo or Firefox, which only add a shortcut). Open this page in Chrome, tap ⋮ and choose “Install app”. Note: entries are stored per browser, so back up here first and restore in Chrome.");
+}
 </script>
 </body>
 </html>
